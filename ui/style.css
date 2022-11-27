@@ -1,0 +1,13 @@
+div#model-view {
+    position: relative;
+    float: left;
+    width: 60%;
+}
+
+canvas#model-view {
+    width: 100%;
+}
+
+div#properties {
+    width: 40%;
+}

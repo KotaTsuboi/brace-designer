@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <link rel="stylesheet" href="style.css" />
+    <script src="https://unpkg.com/three@0.137.4/build/three.min.js"></script>
+    <script src="https://unpkg.com/three@0.137.4/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://unpkg.com/three@0.137.4/examples/js/utils/BufferGeometryUtils.js"></script>
+    <script src="main.js"></script>
+</head>
+
+<body>
+    <h1>Brace Designer</h1>
+    <div id="model-view">
+        <canvas id="model-view"></canvas>
+    </div>
+    <div id="properties">
+        <table>
+            <tbody>
+                <tr>
+                    <th>Base</th>
+                </tr>
+                <tr>
+                    <td>
+                        <label>Section</label>
+                    </td>
+                    <td>
+                        <select id="section-list">
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <label>Material</label>
+                    </td>
+                    <td>
+                        <select id="material-list">
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <th>Bolt</th>
+                </tr>
+                <tr>
+                    <td>
+                        <label>Material</label>
+                    </td>
+                    <td>
+                        <select id="bolt-material-list">
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <label>Diameter</label>
+                    </td>
+                    <td>
+                        <select id="bolt-diameter-list">
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <th>Force</th>
+                </tr>
+                <tr>
+                    <td>
+                        Short load
+                    </td>
+                    <td>
+                        <input type="range" id="short-load">
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</body>
+
+</html>
