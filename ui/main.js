@@ -46,9 +46,19 @@ async function modifyModelView() {
     const geometry = angleSteel(a, b, t, l);
 
     const material = new THREE.MeshNormalMaterial();
-    mesh = new THREE.Mesh(geometry, material);
 
-    if (typeof currentMesh !== undefined) {
+    let tmp;
+    if (mesh !== undefined) {
+        console.log("mesh is undefined.");
+        tmp = mesh.rotation.y;
+    }
+    mesh = new THREE.Mesh(geometry, material);
+    console.log("mesh set.");
+    if (tmp !== undefined) {
+        mesh.rotation.y = tmp;
+    }
+
+    if (currentMesh !== undefined) {
         scene.remove(currentMesh);
     }
 
@@ -79,7 +89,7 @@ async function initializeModelView() {
     });
 
     const camera = new THREE.PerspectiveCamera(45, 1.0, 1, 1000000);
-    camera.position.set(0, 0, +1000);
+    camera.position.set(1000, 1000, 1000);
 
     const controls = new THREE.OrbitControls(camera, canvasElement);
     // 滑らかにカメラコントロールを制御
@@ -108,7 +118,7 @@ async function initializeModelView() {
     window.addEventListener('resize', onResize);
 
     function onResize() {
-        const width = window.innerWidth;
+        const width = window.innerWidth * 0.6;
         const height = window.innerHeight;
 
         renderer.setPixelRatio(window.devicePixelRatio);
@@ -119,7 +129,7 @@ async function initializeModelView() {
     }
 }
 
-function addEventListenerToSelect() {
+function addEventListenerToProperties() {
     const listEl = document.querySelector("#section-list");
     listEl.addEventListener("change", () => {
         setSection();
@@ -128,12 +138,19 @@ function addEventListenerToSelect() {
     const sliderEl = document.querySelector("#short-load");
     sliderEl.addEventListener("input", () => {
         modifyModelView();
+        modifyLoadValue();
     });
+}
+
+function modifyLoadValue() {
+    const sliderEl = document.querySelector("#short-load");
+    const labelEl = document.querySelector("#short-load-value");
+    labelEl.innerHTML = sliderEl.value;
 }
 
 window.addEventListener("DOMContentLoaded", async () => {
     await addSectionOptions();
-    addEventListenerToSelect();
+    addEventListenerToProperties();
     initializeModelView();
 });
 
