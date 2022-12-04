@@ -34,7 +34,20 @@ async function modifyModelView() {
 
     const geometry = extrudeGeometry(shape);
 
-    const material = new THREE.MeshNormalMaterial();
+    const rate = await invoke("calculate");
+
+    let color;
+    if (rate > 1) {
+        color = 0xFF0000
+    } else {
+        color = 0x999999;
+    }
+
+    const material = new THREE.MeshStandardMaterial({
+        color: color,
+        metalness: 1,
+        roughness: 0.9,
+    });
 
     let tmp;
     if (mesh !== undefined) {
@@ -50,6 +63,8 @@ async function modifyModelView() {
     if (currentMesh !== undefined) {
         scene.remove(currentMesh);
     }
+
+    mesh.translateY(100);
 
     scene.add(mesh)
     currentMesh = mesh;
@@ -94,16 +109,34 @@ async function initializeModelView() {
     const camera = new THREE.PerspectiveCamera(45, 1.0, 1, 1000000);
     camera.position.set(1000, 1000, 1000);
 
+    scene.background = new THREE.Color(0xe0e0e0);
+    scene.fog = new THREE.Fog(0xe0e0e0, 2000, 10000);
+
+    // lights
+
+    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444);
+    hemiLight.position.set(0, 2000, 0);
+    scene.add(hemiLight);
+
+    const dirLight = new THREE.DirectionalLight(0xffffff);
+    dirLight.position.set(0, 2000, 1000);
+    scene.add(dirLight);
+
+    // ground
+
+    const plane = new THREE.Mesh(new THREE.PlaneGeometry(200000, 200000), new THREE.MeshPhongMaterial({color: 0x999999, depthWrite: false}));
+    plane.rotation.x = - Math.PI / 2;
+    scene.add(plane);
+
+    const grid = new THREE.GridHelper(20000, 100, 0x000000, 0x000000);
+    grid.material.opacity = 0.2;
+    grid.material.transparent = true;
+    scene.add(grid);
+
     const controls = new THREE.OrbitControls(camera, canvasElement);
     // 滑らかにカメラコントロールを制御
     controls.enableDamping = true;
     controls.dampingFactor = 0.2;
-
-    const light = new THREE.DirectionalLight(0xFFFFFF, 1);
-    light.position.set(0, 0, 1000000);
-    scene.add(light);
-    const ambientLight = new THREE.AmbientLight(0xFFFFFF, 0.3);
-    scene.add(ambientLight);
 
     await modifyModelView();
 
@@ -111,7 +144,7 @@ async function initializeModelView() {
 
     function tick() {
         controls.update();
-        mesh.rotation.y += 0.01;
+        //mesh.rotation.y += 0.01;
         renderer.render(scene, camera);
         requestAnimationFrame(tick);
     }
@@ -132,6 +165,12 @@ async function initializeModelView() {
     }
 }
 
+async function setLoadValue() {
+    const sliderEl = document.querySelector("#short-load-slider");
+    const value = parseFloat(sliderEl.value);
+    await invoke("set_force_in_kn", {value: value});
+}
+
 function addEventListenerToProperties() {
     const listEl = document.querySelector("#section-list");
     listEl.addEventListener("change", () => {
@@ -140,17 +179,21 @@ function addEventListenerToProperties() {
     });
 
     const materialListEl = document.querySelector("#material-list");
-    materialListEl.addEventListener("change", setMaterial);
-
-    const sliderEl = document.querySelector("#short-load");
-    sliderEl.addEventListener("input", () => {
+    materialListEl.addEventListener("change", () => {
+        setMaterial();
         modifyModelView();
+    });
+
+    const sliderEl = document.querySelector("#short-load-slider");
+    sliderEl.addEventListener("input", () => {
         modifyLoadValue();
+        setLoadValue();
+        modifyModelView();
     });
 }
 
 function modifyLoadValue() {
-    const sliderEl = document.querySelector("#short-load");
+    const sliderEl = document.querySelector("#short-load-slider");
     const labelEl = document.querySelector("#short-load-value");
     labelEl.innerHTML = sliderEl.value;
 }
