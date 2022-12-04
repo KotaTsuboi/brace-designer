@@ -7,20 +7,18 @@ let currentMesh;
 
 async function setSection() {
     const listEl = document.querySelector("#section-list");
-    //const id = listEl.selectedIndex;
+
     const name = listEl.value;
 
-    const isAngle = await invoke("is_angle_section", {name: name});
-    if (isAngle) {
-        invoke("set_angle_section", {name: name});
-        return;
-    }
+    await invoke("set_section", {name: name});
+}
 
-    const isChannel = await invoke("is_channel_section", {name: name});
-    if (isChannel) {
-        invoke("set_channel_section", {name: name});
-        return;
-    }
+async function setMaterial() {
+    const listEl = document.querySelector("#material-list");
+
+    const name = listEl.value;
+
+    await invoke("set_material", {name: name});
 }
 
 async function modifyModelView() {
@@ -30,20 +28,11 @@ async function modifyModelView() {
 
     console.log("name: " + name);
 
-    const isAngle = await invoke("is_angle_section", {name: name});
+    const shape = await angleSteelShape(name);
 
-    if (!isAngle) {
-        return;
-    }
+    console.log("shape: " + shape);
 
-    const a = await invoke("get_angle_a_as_mm");
-    const b = await invoke("get_angle_b_as_mm");
-    const t = await invoke("get_angle_t_as_mm");
-    console.log("a: " + a + ", b: " + b + ", t: " + t);
-
-    const l = 1000;
-
-    const geometry = angleSteel(a, b, t, l);
+    const geometry = extrudeGeometry(shape);
 
     const material = new THREE.MeshNormalMaterial();
 
@@ -76,6 +65,20 @@ async function addSectionOptions() {
         const opt = document.createElement("option");
         opt.value = section;
         opt.innerHTML = section;
+        listEl.appendChild(opt);
+    }
+}
+
+async function addMaterialOptions() {
+    console.log("add material options");
+    const listEl = document.querySelector("#material-list");
+    const list = await invoke("list_materials");
+
+    for (const material of list) {
+        console.log("material: " + material);
+        const opt = document.createElement("option");
+        opt.value = material;
+        opt.innerHTML = material;
         listEl.appendChild(opt);
     }
 }
@@ -135,6 +138,10 @@ function addEventListenerToProperties() {
         setSection();
         modifyModelView();
     });
+
+    const materialListEl = document.querySelector("#material-list");
+    materialListEl.addEventListener("change", setMaterial);
+
     const sliderEl = document.querySelector("#short-load");
     sliderEl.addEventListener("input", () => {
         modifyModelView();
@@ -150,28 +157,28 @@ function modifyLoadValue() {
 
 window.addEventListener("DOMContentLoaded", async () => {
     await addSectionOptions();
+    await addMaterialOptions();
     addEventListenerToProperties();
     initializeModelView();
 });
 
-function angleSteelShape(a, b, t) {
+async function angleSteelShape(name) {
+    const polyline = await invoke("get_section_in_mm", {name: name});
+
     const shape = new THREE.Shape();
 
-    shape.moveTo(0, 0);
-    shape.lineTo(a, 0);
-    shape.lineTo(a, t);
-    shape.lineTo(t, t);
-    shape.lineTo(t, b);
-    shape.lineTo(0, b);
+    shape.moveTo(polyline.start_point[0], polyline.start_point[1]);
+
+    for (point of polyline.next_points) {
+        shape.lineTo(point[0], point[1]);
+    }
 
     return shape;
 }
 
-function angleSteel(a, b, t, l) {
-    const shape = angleSteelShape(a, b, t);
-
+function extrudeGeometry(shape) {
     const extrudeSettings = {
-        depth: l,
+        depth: 1000,
         bevelEnabled: false
     };
 

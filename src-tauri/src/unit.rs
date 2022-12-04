@@ -1,4 +1,6 @@
+#[derive(Default)]
 pub enum LengthUnit {
+    #[default]
     Meter,
     CentiMeter,
     MilliMeter,
@@ -14,7 +16,9 @@ impl LengthUnit {
     }
 }
 
+#[derive(Default)]
 pub enum ForceUnit {
+    #[default]
     Newton,
     KiloNewton,
 }
