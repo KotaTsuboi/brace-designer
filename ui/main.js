@@ -154,7 +154,7 @@ async function initializeModelView() {
     window.addEventListener('resize', onResize);
 
     function onResize() {
-        const width = window.innerWidth * 0.6;
+        const width = window.innerWidth;
         const height = window.innerHeight;
 
         renderer.setPixelRatio(window.devicePixelRatio);
