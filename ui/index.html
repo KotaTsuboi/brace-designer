@@ -47,7 +47,7 @@
                             <label>Material</label>
                         </td>
                         <td>
-                            <select id="bolt-material-list">
+                            <select class="bolt-properties" id="bolt-material-list">
                             </select>
                         </td>
                     </tr>
@@ -56,8 +56,19 @@
                             <label>Diameter</label>
                         </td>
                         <td>
-                            <select id="bolt-diameter-list">
+                            <select class="bolt-properties" id="bolt-diameter-list">
                             </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            Number of bolts
+                        </td>
+                        <td>
+                            <input type="range" class="bolt-properties" id="num-bolts-slider" min="1" max="10" step="1" value="1">
+                        </td>
+                        <td>
+                            <label id="num-bolts-value"></label>
                         </td>
                     </tr>
                     <tr>
@@ -68,7 +79,7 @@
                             Short load
                         </td>
                         <td>
-                            <input type="range" id="short-load-slider" min="0" max="1000" , value="0">
+                            <input type="range" id="short-load-slider" min="0" max="1000" value="0">
                         </td>
                         <td>
                             <label id="short-load-value"></label>

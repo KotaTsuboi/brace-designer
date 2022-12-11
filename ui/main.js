@@ -5,97 +5,69 @@ const scene = new THREE.Scene();
 let mesh;
 let currentMesh;
 
-async function setSection() {
-    const listEl = document.querySelector("#section-list");
+window.addEventListener("DOMContentLoaded", async () => {
+    await addOptions("#section-list", "list_sections");
+    await addOptions("#material-list", "list_materials");
+    await addOptions("#bolt-material-list", "list_bolt_materials");
+    await addOptions("#bolt-diameter-list", "list_bolt_diameters");
+    addEventListenerToProperties();
+    initializeModelView();
+});
 
-    const name = listEl.value;
-
-    await invoke("set_section", {name: name});
+async function addOptions(id, command) {
+    const listEl = document.querySelector(id);
+    const list = await invoke(command);
+    appendChildToList(listEl, list);
 }
 
-async function setMaterial() {
-    const listEl = document.querySelector("#material-list");
-
-    const name = listEl.value;
-
-    await invoke("set_material", {name: name});
-}
-
-async function modifyModelView() {
-    console.log("modify model view");
-    const listEl = document.querySelector("#section-list");
-    const name = listEl.value;
-
-    console.log("name: " + name);
-
-    const shape = await angleSteelShape(name);
-
-    console.log("shape: " + shape);
-
-    const geometry = extrudeGeometry(shape);
-
-    const rate = await invoke("calculate");
-
-    let color;
-    if (rate > 1) {
-        color = 0xFF0000
-    } else {
-        color = 0x999999;
+function appendChildToList(listEl, list) {
+    for (const value of list) {
+        console.log("child: " + value);
+        const opt = document.createElement("option");
+        opt.value = value;
+        opt.innerHTML = value;
+        listEl.appendChild(opt);
     }
+}
 
-    const material = new THREE.MeshStandardMaterial({
-        color: color,
-        metalness: 1,
-        roughness: 0.9,
+function addEventListenerToProperties() {
+    const sectionListEl = document.querySelector("#section-list");
+    sectionListEl.addEventListener("change", async () => {
+        await invoke("set_section", {name: sectionListEl.value});
+        modifyModelView();
     });
 
-    let tmp;
-    if (mesh !== undefined) {
-        console.log("mesh is undefined.");
-        tmp = mesh.rotation.y;
-    }
-    mesh = new THREE.Mesh(geometry, material);
-    console.log("mesh set.");
-    if (tmp !== undefined) {
-        mesh.rotation.y = tmp;
-    }
+    const materialListEl = document.querySelector("#material-list");
+    materialListEl.addEventListener("change", async () => {
+        await invoke("set_material", {name: materialListEl.value});
+        modifyModelView();
+    });
 
-    if (currentMesh !== undefined) {
-        scene.remove(currentMesh);
-    }
+    const boltPropertiesEl = document.querySelectorAll(".bolt-properties");
+    boltPropertiesEl.forEach((el) => {
+        const boltMaterialListEl = document.querySelector("#bolt-material-list");
+        const boltDiameterListEl = document.querySelector("#bolt-diameter-list");
+        const numBoltsSliderEl = document.querySelector("#num-bolts-slider");
+        const type = el.tagName === "input" ? "input" : "change";
+        el.addEventListener(type, async () => {
+            await invoke("set_bolts", {
+                material: boltMaterialListEl.value,
+                diameter: boltDiameterListEl.value,
+                num_bolts: parseInt(numBoltsSliderEl.value)
+            });
+            modifyModelView();
+        });
+    });
 
-    mesh.translateY(100);
+    const numBoltsSliderEl = document.querySelector("#num-bolts-slider");
+    numBoltsSliderEl.addEventListener("input", () => modifyBoltNum());
 
-    scene.add(mesh)
-    currentMesh = mesh;
-}
-
-async function addSectionOptions() {
-    console.log("add section options");
-    const listEl = document.querySelector("#section-list");
-    const list = await invoke("list_sections");
-
-    for (const section of list) {
-        console.log("section: " + section);
-        const opt = document.createElement("option");
-        opt.value = section;
-        opt.innerHTML = section;
-        listEl.appendChild(opt);
-    }
-}
-
-async function addMaterialOptions() {
-    console.log("add material options");
-    const listEl = document.querySelector("#material-list");
-    const list = await invoke("list_materials");
-
-    for (const material of list) {
-        console.log("material: " + material);
-        const opt = document.createElement("option");
-        opt.value = material;
-        opt.innerHTML = material;
-        listEl.appendChild(opt);
-    }
+    const loadSliderEl = document.querySelector("#short-load-slider");
+    loadSliderEl.addEventListener("input", async () => {
+        modifyLoadValue();
+        await invoke("set_force_in_kn", {value: parseFloat(loadSliderEl.value)});
+        modifyModelView();
+    });
 }
 
 async function initializeModelView() {
@@ -138,6 +110,10 @@ async function initializeModelView() {
     controls.enableDamping = true;
     controls.dampingFactor = 0.2;
 
+    // helper
+    const axesHelper = new THREE.AxesHelper(1000);
+    scene.add(axesHelper);
+
     await modifyModelView();
 
     tick();
@@ -165,31 +141,59 @@ async function initializeModelView() {
     }
 }
 
-async function setLoadValue() {
-    const sliderEl = document.querySelector("#short-load-slider");
-    const value = parseFloat(sliderEl.value);
-    await invoke("set_force_in_kn", {value: value});
+async function modifyModelView() {
+    console.log("modify model view");
+    const listEl = document.querySelector("#section-list");
+    const name = listEl.value;
+
+    console.log("name: " + name);
+
+    const shape = await getShape(name);
+
+    console.log("shape: " + shape);
+
+    const geometry = extrudeGeometry(shape);
+
+    const rate = await invoke("calculate");
+
+    let color;
+    if (rate > 1) {
+        color = 0xFF0000
+    } else {
+        color = 0x999999;
+    }
+
+    const material = new THREE.MeshStandardMaterial({
+        color: color,
+        metalness: 1,
+        roughness: 0.9,
+    });
+
+    let tmp;
+    if (mesh !== undefined) {
+        console.log("mesh is undefined.");
+        tmp = mesh.rotation.y;
+    }
+    mesh = new THREE.Mesh(geometry, material);
+    console.log("mesh set.");
+    if (tmp !== undefined) {
+        mesh.rotation.y = tmp;
+    }
+
+    if (currentMesh !== undefined) {
+        scene.remove(currentMesh);
+    }
+
+    mesh.translateY(100);
+
+    scene.add(mesh)
+    currentMesh = mesh;
 }
 
-function addEventListenerToProperties() {
-    const listEl = document.querySelector("#section-list");
-    listEl.addEventListener("change", () => {
-        setSection();
-        modifyModelView();
-    });
-
-    const materialListEl = document.querySelector("#material-list");
-    materialListEl.addEventListener("change", () => {
-        setMaterial();
-        modifyModelView();
-    });
-
-    const sliderEl = document.querySelector("#short-load-slider");
-    sliderEl.addEventListener("input", () => {
-        modifyLoadValue();
-        setLoadValue();
-        modifyModelView();
-    });
+function modifyBoltNum() {
+    const sliderEl = document.querySelector("#num-bolts-slider");
+    const labelEl = document.querySelector("#num-bolts-value");
+    labelEl.innerHTML = sliderEl.value;
 }
 
 function modifyLoadValue() {
@@ -198,14 +202,7 @@ function modifyLoadValue() {
     labelEl.innerHTML = sliderEl.value;
 }
 
-window.addEventListener("DOMContentLoaded", async () => {
-    await addSectionOptions();
-    await addMaterialOptions();
-    addEventListenerToProperties();
-    initializeModelView();
-});
-
-async function angleSteelShape(name) {
+async function getShape(name) {
     const polyline = await invoke("get_section_in_mm", {name: name});
 
     const shape = new THREE.Shape();

@@ -32,25 +32,45 @@ impl AngleSteel {
         Self::iter().find(|section| section.name() == name)
     }
 
-    pub fn a(&self) -> Length {
+    fn a_mm(&self) -> f64 {
         match self {
-            Self::L80x80x6 => Length::new(80.0, &MilliMeter),
-            Self::L100x100x10 => Length::new(100.0, &MilliMeter),
+            Self::L80x80x6 => 80.0,
+            Self::L100x100x10 => 100.0,
         }
     }
 
-    pub fn b(&self) -> Length {
+    fn b_mm(&self) -> f64 {
         match self {
-            Self::L80x80x6 => Length::new(80.0, &MilliMeter),
-            Self::L100x100x10 => Length::new(100.0, &MilliMeter),
+            Self::L80x80x6 => 80.0,
+            Self::L100x100x10 => 100.0,
         }
     }
 
-    pub fn t(&self) -> Length {
+    fn t_mm(&self) -> f64 {
         match self {
-            Self::L80x80x6 => Length::new(6.0, &MilliMeter),
-            Self::L100x100x10 => Length::new(10.0, &MilliMeter),
+            Self::L80x80x6 => 6.0,
+            Self::L100x100x10 => 10.0,
         }
+    }
+
+    fn a(&self) -> Length {
+        Length::new(self.a_mm(), &MilliMeter)
+    }
+
+    fn b(&self) -> Length {
+        Length::new(self.b_mm(), &MilliMeter)
+    }
+
+    fn t(&self) -> Length {
+        Length::new(self.t_mm(), &MilliMeter)
+    }
+
+    fn gauge1(&self) -> Length {
+        todo!()
+    }
+
+    fn gauge2(&self) -> Option<Length> {
+        todo!()
     }
 }
 
@@ -94,28 +114,48 @@ impl ChannelSteel {
         Self::iter().find(|section| section.name() == name)
     }
 
-    fn h(&self) -> Length {
+    fn h_mm(&self) -> f64 {
         match self {
-            Self::C100x50x5x7_5 => Length::new(100.0, &MilliMeter),
+            Self::C100x50x5x7_5 => 100.0,
         }
+    }
+
+    fn b_mm(&self) -> f64 {
+        match self {
+            Self::C100x50x5x7_5 => 50.0,
+        }
+    }
+
+    fn t1_mm(&self) -> f64 {
+        match self {
+            Self::C100x50x5x7_5 => 5.0,
+        }
+    }
+
+    fn t2_mm(&self) -> f64 {
+        match self {
+            Self::C100x50x5x7_5 => 7.5,
+        }
+    }
+
+    fn h(&self) -> Length {
+        Length::new(self.h_mm(), &MilliMeter)
     }
 
     fn b(&self) -> Length {
-        match self {
-            Self::C100x50x5x7_5 => Length::new(50.0, &MilliMeter),
-        }
+        Length::new(self.b_mm(), &MilliMeter)
     }
 
     fn t1(&self) -> Length {
-        match self {
-            Self::C100x50x5x7_5 => Length::new(5.0, &MilliMeter),
-        }
+        Length::new(self.t1_mm(), &MilliMeter)
     }
 
     fn t2(&self) -> Length {
-        match self {
-            Self::C100x50x5x7_5 => Length::new(7.5, &MilliMeter),
-        }
+        Length::new(self.t2_mm(), &MilliMeter)
+    }
+
+    fn gauge(&self) -> Option<Length> {
+        todo!()
     }
 }
 
@@ -160,4 +200,43 @@ impl Section for ChannelSteel {
 pub struct Polyline {
     start_point: (f64, f64),
     next_points: Vec<(f64, f64)>,
+}
+
+#[test]
+fn test_angle_gauge1() {
+    let data: Vec<(AngleSteel, f64)> = vec![
+        (AngleSteel::L80x80x6, 45.0),
+        (AngleSteel::L100x100x10, 55.0),
+    ];
+
+    for tuple in data {
+        let actual = tuple.0.gauge1();
+        let expected = Length::new(tuple.1, &MilliMeter);
+        assert_eq!(actual, expected);
+    }
+}
+
+#[test]
+fn test_angle_gauge2() {
+    let data: Vec<(AngleSteel, Option<f64>)> = vec![
+        (AngleSteel::L80x80x6, None),
+        (AngleSteel::L100x100x10, None),
+    ];
+
+    for tuple in data {
+        let actual = tuple.0.gauge2();
+        let expected = tuple.1.map(|g| Length::new(g, &MilliMeter));
+        assert_eq!(actual, expected);
+    }
+}
+
+#[test]
+fn test_channel_gauge() {
+    let data: Vec<(ChannelSteel, Option<f64>)> = vec![(ChannelSteel::C100x50x5x7_5, None)];
+
+    for tuple in data {
+        let actual = tuple.0.gauge();
+        let expected = tuple.1.map(|g| Length::new(g, &MilliMeter));
+        assert_eq!(actual, expected);
+    }
 }

@@ -1,6 +1,7 @@
 use crate::unit::*;
 use std::ops;
 
+#[derive(Debug, PartialEq)]
 pub struct Length {
     m: f64,
 }
