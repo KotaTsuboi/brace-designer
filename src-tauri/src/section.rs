@@ -8,6 +8,7 @@ pub trait Section: Send + Sync {
     fn area(&self) -> Area;
     fn name(&self) -> &str;
     fn shape_in_mm(&self) -> Polyline;
+    fn gauge_list(&self) -> Vec<Length>;
 }
 
 pub fn get_section(name: &str) -> Option<Box<dyn Section>> {
@@ -64,14 +65,6 @@ impl AngleSteel {
     fn t(&self) -> Length {
         Length::new(self.t_mm(), &MilliMeter)
     }
-
-    fn gauge1(&self) -> Length {
-        todo!()
-    }
-
-    fn gauge2(&self) -> Option<Length> {
-        todo!()
-    }
 }
 
 impl Section for AngleSteel {
@@ -99,6 +92,15 @@ impl Section for AngleSteel {
         Polyline {
             start_point: (0.0, 0.0),
             next_points: vec![(a, 0.0), (a, t), (t, t), (t, b), (0.0, b)],
+        }
+    }
+
+    fn gauge_list(&self) -> Vec<Length> {
+        let unit = &MilliMeter;
+
+        match self {
+            Self::L80x80x6 => vec![Length::new(45.0, unit)],
+            Self::L100x100x10 => vec![Length::new(55.0, unit)],
         }
     }
 }
@@ -153,10 +155,6 @@ impl ChannelSteel {
     fn t2(&self) -> Length {
         Length::new(self.t2_mm(), &MilliMeter)
     }
-
-    fn gauge(&self) -> Option<Length> {
-        todo!()
-    }
 }
 
 impl Section for ChannelSteel {
@@ -194,6 +192,14 @@ impl Section for ChannelSteel {
             ],
         }
     }
+
+    fn gauge_list(&self) -> Vec<Length> {
+        let unit = &MilliMeter;
+
+        match self {
+            Self::C100x50x5x7_5 => vec![Length::new(0.0, unit)],
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize)]
@@ -203,29 +209,15 @@ pub struct Polyline {
 }
 
 #[test]
-fn test_angle_gauge1() {
+fn test_angle_gauge() {
     let data: Vec<(AngleSteel, f64)> = vec![
         (AngleSteel::L80x80x6, 45.0),
         (AngleSteel::L100x100x10, 55.0),
     ];
 
     for tuple in data {
-        let actual = tuple.0.gauge1();
-        let expected = Length::new(tuple.1, &MilliMeter);
-        assert_eq!(actual, expected);
-    }
-}
-
-#[test]
-fn test_angle_gauge2() {
-    let data: Vec<(AngleSteel, Option<f64>)> = vec![
-        (AngleSteel::L80x80x6, None),
-        (AngleSteel::L100x100x10, None),
-    ];
-
-    for tuple in data {
-        let actual = tuple.0.gauge2();
-        let expected = tuple.1.map(|g| Length::new(g, &MilliMeter));
+        let actual = tuple.0.gauge_list();
+        let expected = vec![Length::new(tuple.1, &MilliMeter)];
         assert_eq!(actual, expected);
     }
 }
@@ -235,8 +227,8 @@ fn test_channel_gauge() {
     let data: Vec<(ChannelSteel, Option<f64>)> = vec![(ChannelSteel::C100x50x5x7_5, None)];
 
     for tuple in data {
-        let actual = tuple.0.gauge();
-        let expected = tuple.1.map(|g| Length::new(g, &MilliMeter));
+        let actual = tuple.0.gauge_list();
+        let expected = vec![];
         assert_eq!(actual, expected);
     }
 }

@@ -13,6 +13,7 @@ use crate::bolt::*;
 use crate::material::*;
 use crate::section::*;
 use crate::unit::ForceUnit::*;
+use crate::unit::LengthUnit::*;
 use crate::value::Force;
 use std::sync::Mutex;
 use strum::IntoEnumIterator;
@@ -101,6 +102,13 @@ fn set_material(name: &str, brace: tauri::State<Brace>) {
 }
 
 #[tauri::command]
+fn set_bolts(material_name: &str, diameter_name: &str, num_bolts: u32, brace: tauri::State<Brace>) {
+    let new_bolts = BoltConnection::new(material_name, diameter_name, num_bolts).unwrap();
+    let mut bolts = brace.bolt_connection.lock().unwrap();
+    *bolts = new_bolts;
+}
+
+#[tauri::command]
 fn set_force_in_kn(value: f64, n: tauri::State<AxialForce>) {
     let mut load = n.force.lock().unwrap();
     *load = Force::new(value, &KiloNewton);
@@ -109,6 +117,63 @@ fn set_force_in_kn(value: f64, n: tauri::State<AxialForce>) {
 #[tauri::command]
 fn get_section_in_mm(brace: tauri::State<Brace>) -> Polyline {
     brace.section.lock().unwrap().shape_in_mm()
+}
+
+#[tauri::command]
+fn get_bolt_diameter_in_mm(brace: tauri::State<Brace>) -> f64 {
+    brace
+        .bolt_connection
+        .lock()
+        .unwrap()
+        .bolt
+        .diameter()
+        .get_value_in(&MilliMeter)
+}
+
+#[tauri::command]
+fn get_bolt_coord_list_in_mm(brace: tauri::State<Brace>) -> Vec<(f64, f64)> {
+    let gauge_list: Vec<f64> = brace
+        .section
+        .lock()
+        .unwrap()
+        .gauge_list()
+        .iter()
+        .map(|g| g.get_value_in(&MilliMeter))
+        .collect();
+
+    let num_row = brace.bolt_connection.lock().unwrap().num_row;
+
+    let e = 40.0;
+    let p = 60.0;
+    let mut list: Vec<(f64, f64)> = vec![];
+
+    for y in gauge_list {
+        for i in 0..num_row {
+            let x = e + (i as f64) * p;
+            list.push((x, y));
+        }
+    }
+
+    list
+}
+
+#[tauri::command]
+fn get_joint_length_in_mm(brace: tauri::State<Brace>) -> f64 {
+    let num_row = brace.bolt_connection.lock().unwrap().num_row;
+
+    let e = 40.0;
+    let p = 60.0;
+
+    2.0 * e + (num_row - 1) as f64 * p
+}
+
+#[tauri::command]
+fn get_bolt_dimension_in_mm(brace: tauri::State<Brace>) -> (f64, f64) {
+    let bolts = brace.bolt_connection.lock().unwrap();
+    (
+        bolts.bolt.head_height().get_value_in(&MilliMeter),
+        bolts.bolt.head_size().get_value_in(&MilliMeter),
+    )
 }
 
 #[tauri::command]
@@ -130,8 +195,13 @@ fn main() {
             list_bolt_materials,
             set_section,
             set_material,
+            set_bolts,
             set_force_in_kn,
             get_section_in_mm,
+            get_bolt_diameter_in_mm,
+            get_bolt_coord_list_in_mm,
+            get_joint_length_in_mm,
+            get_bolt_dimension_in_mm,
             calculate,
         ])
         .run(tauri::generate_context!())
