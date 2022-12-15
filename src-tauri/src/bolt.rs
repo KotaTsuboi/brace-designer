@@ -71,6 +71,10 @@ impl HighTensionBolt {
     pub fn head_size(&self) -> Length {
         self.diameter.large_d()
     }
+
+    pub fn allowable_shear_short_single_friction(&self) -> Force {
+        self.diameter.full_area() * self.material.get_t0() * 0.45
+    }
 }
 
 #[derive(EnumIter, Default)]
@@ -123,5 +127,16 @@ impl BoltDiameter {
 
     fn large_d(&self) -> Length {
         Length::new(self.large_d_mm(), &MilliMeter)
+    }
+
+    fn full_area_mm(&self) -> f64 {
+        match self {
+            Self::M20 => 314.0,
+            Self::M22 => 380.0,
+        }
+    }
+
+    fn full_area(&self) -> Area {
+        Area::new(self.full_area_mm(), &MilliMeter)
     }
 }

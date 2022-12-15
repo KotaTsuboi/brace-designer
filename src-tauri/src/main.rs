@@ -120,6 +120,16 @@ fn get_section_in_mm(brace: tauri::State<Brace>) -> Polyline {
 }
 
 #[tauri::command]
+fn get_section_thickness_in_mm(brace: tauri::State<Brace>) -> f64 {
+    brace
+        .section
+        .lock()
+        .unwrap()
+        .thickness()
+        .get_value_in(&MilliMeter)
+}
+
+#[tauri::command]
 fn get_bolt_diameter_in_mm(brace: tauri::State<Brace>) -> f64 {
     brace
         .bolt_connection
@@ -198,6 +208,7 @@ fn main() {
             set_bolts,
             set_force_in_kn,
             get_section_in_mm,
+            get_section_thickness_in_mm,
             get_bolt_diameter_in_mm,
             get_bolt_coord_list_in_mm,
             get_joint_length_in_mm,

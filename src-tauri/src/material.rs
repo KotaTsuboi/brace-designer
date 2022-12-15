@@ -61,15 +61,15 @@ impl BoltMaterial {
         }
     }
 
-    fn get_t0_nmm(&self) -> f64 {
+    fn t0_nmm(&self) -> f64 {
         match self {
             Self::F8T => 400.0,
             Self::F10T => 500.0,
         }
     }
 
-    fn get_t0(&self) -> Stress {
-        Stress::new(self.get_t0_nmm(), &Newton, &MilliMeter)
+    pub fn t0(&self) -> Stress {
+        Stress::new(self.t0_nmm(), &Newton, &MilliMeter)
     }
 }
 

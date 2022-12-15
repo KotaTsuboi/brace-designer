@@ -9,6 +9,7 @@ pub trait Section: Send + Sync {
     fn name(&self) -> &str;
     fn shape_in_mm(&self) -> Polyline;
     fn gauge_list(&self) -> Vec<Length>;
+    fn thickness(&self) -> Length;
 }
 
 pub fn get_section(name: &str) -> Option<Box<dyn Section>> {
@@ -102,6 +103,10 @@ impl Section for AngleSteel {
             Self::L80x80x6 => vec![Length::new(45.0, unit)],
             Self::L100x100x10 => vec![Length::new(55.0, unit)],
         }
+    }
+
+    fn thickness(&self) -> Length {
+        self.t()
     }
 }
 
@@ -199,6 +204,10 @@ impl Section for ChannelSteel {
         match self {
             Self::C100x50x5x7_5 => vec![Length::new(0.0, unit)],
         }
+    }
+
+    fn thickness(&self) -> Length {
+        self.t1()
     }
 }
 

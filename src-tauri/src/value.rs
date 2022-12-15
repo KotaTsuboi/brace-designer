@@ -53,6 +53,14 @@ impl Force {
     }
 }
 
+impl ops::Mul<f64> for Force {
+    type Output = Force;
+
+    fn mul(self, rhs: f64) -> Self::Output {
+        Force { n: self.n * rhs }
+    }
+}
+
 impl ops::Div<Area> for Force {
     type Output = Stress;
 

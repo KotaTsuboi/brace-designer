@@ -155,8 +155,6 @@ async function extrudeBase(shape) {
 
 async function modifyBoltModel() {
     const coordList = await invoke("get_bolt_coord_list_in_mm");
-    console.log("coord list:")
-    console.log(coordList);
 
     for (const bolt of bolts) {
         scene.remove(bolt);
@@ -164,27 +162,21 @@ async function modifyBoltModel() {
 
     for (const zy of coordList) {
         const geometry = await getBolt();
-        console.log("geometry:")
-        console.log(geometry);
+        const t = await invoke("get_section_thickness_in_mm");
 
         const material = new THREE.MeshStandardMaterial({
             color: 0x999999,
             metalness: 1,
             roughness: 0.9,
         });
-        console.log("material:")
-        console.log(material);
 
         const bolt = new THREE.Mesh(geometry, material);
-        console.log("mesh:")
-        console.log(bolt);
 
         const z = zy[0];
-        console.log("z: " + z);
         const y = zy[1];
-        console.log("y: " + y);
         bolt.translateZ(z);
         bolt.translateY(y);
+        bolt.translateX(t);
 
         bolt.rotation.y += Math.PI / 2;
 
@@ -197,8 +189,6 @@ async function getBolt() {
     const dimensions = await invoke("get_bolt_dimension_in_mm");
     const h = dimensions[0];
     const b = dimensions[1];
-    console.log("h: " + h);
-    console.log("b: " + b);
 
     const shape = new THREE.Shape();
     shape.moveTo(b / 2, 0);
@@ -209,9 +199,6 @@ async function getBolt() {
     shape.lineTo(0, -b / 2);
     shape.lineTo(b / 2, -b / 2 / Math.sqrt(3));
     shape.lineTo(b / 2, 0);
-
-    console.log("shape:");
-    console.log(shape);
 
     const extrudeSettings = {
         depth: h,
