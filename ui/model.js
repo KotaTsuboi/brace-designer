@@ -25,15 +25,15 @@ export async function initializeModelView() {
     // lights
 
     const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444);
-    hemiLight.position.set(0, 2000, 0);
+    hemiLight.position.set(0, 10000, 0);
     scene.add(hemiLight);
 
     const dirLight1 = new THREE.DirectionalLight(0xffffff);
-    dirLight1.position.set(2000, 2000, 0);
+    dirLight1.position.set(10000, 10000, 0);
     scene.add(dirLight1);
 
     const dirLight2 = new THREE.DirectionalLight(0xffffff);
-    dirLight2.position.set(-2000, 2000, 0);
+    dirLight2.position.set(-10000, 10000, 0);
     scene.add(dirLight2);
 
     // ground
@@ -107,6 +107,16 @@ function getColor(rate) {
     }
 }
 
+function getSteelMaterial(color) 
+{
+    return new THREE.MeshStandardMaterial({
+        color: color,
+        metalness: 1,
+        roughness: 0.5,
+    });
+
+}
+
 async function modifyBaseModel() {
     const shape = await getSectionShape();
 
@@ -114,15 +124,11 @@ async function modifyBaseModel() {
 
     const geometry = await extrudeBase(shape);
 
-    const rate = await invoke("calculate");
+    const rate = await invoke("calculate_base");
 
     const color = getColor(rate);
 
-    const material = new THREE.MeshStandardMaterial({
-        color: color,
-        metalness: 1,
-        roughness: 0.9,
-    });
+    const material = getSteelMaterial(color);
 
     mesh = new THREE.Mesh(geometry, material);
     console.log("mesh set.");
@@ -182,11 +188,7 @@ async function modifyBoltModel() {
         const geometry = await getBolt();
         const t = await invoke("get_section_thickness_in_mm");
 
-        const material = new THREE.MeshStandardMaterial({
-            color: color,
-            metalness: 1,
-            roughness: 0.9,
-        });
+        const material = getSteelMaterial(color);
 
         const bolt = new THREE.Mesh(geometry, material);
 

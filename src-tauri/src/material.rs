@@ -27,15 +27,15 @@ impl SteelMaterial {
 
     pub fn get_fy(&self) -> Stress {
         match self {
-            Self::SS400 => Stress::new(235.0, &Newton, &MilliMeter),
-            Self::SM490 => Stress::new(325.0, &Newton, &MilliMeter),
+            Self::SS400 => Stress::new(235.0, Newton, MilliMeter),
+            Self::SM490 => Stress::new(325.0, Newton, MilliMeter),
         }
     }
 
     pub fn get_fu(&self) -> Stress {
         match self {
-            Self::SS400 => Stress::new(400.0, &Newton, &MilliMeter),
-            Self::SM490 => Stress::new(490.0, &Newton, &MilliMeter),
+            Self::SS400 => Stress::new(400.0, Newton, MilliMeter),
+            Self::SM490 => Stress::new(490.0, Newton, MilliMeter),
         }
     }
 }
@@ -69,7 +69,7 @@ impl BoltMaterial {
     }
 
     pub fn t0(&self) -> Stress {
-        Stress::new(self.t0_nmm(), &Newton, &MilliMeter)
+        Stress::new(self.t0_nmm(), Newton, MilliMeter)
     }
 }
 

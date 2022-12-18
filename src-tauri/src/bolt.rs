@@ -16,20 +16,6 @@ impl BoltConnection {
         }
         None
     }
-
-    /*
-    pub fn diameter(&self) -> Length {
-        self.bolt.diameter()
-    }
-
-    pub fn head_height(&self) -> Length {
-        self.bolt.head_height()
-    }
-
-    pub fn head_size(&self) -> Length {
-        self.bolt.head_size()
-    }
-    */
 }
 
 impl Default for BoltConnection {
@@ -62,6 +48,10 @@ impl HighTensionBolt {
 
     pub fn diameter(&self) -> Length {
         self.diameter.d()
+    }
+
+    pub fn hole_diameter(&self) -> Length {
+        self.diameter.hole_diameter()
     }
 
     pub fn head_height(&self) -> Length {
@@ -108,7 +98,18 @@ impl BoltDiameter {
     }
 
     fn d(&self) -> Length {
-        Length::new(self.d_mm(), &MilliMeter)
+        Length::new(self.d_mm(), MilliMeter)
+    }
+
+    fn hole_diameter_mm(&self) -> f64 {
+        match self {
+            Self::M20 => 22.0,
+            Self::M22 => 24.0,
+        }
+    }
+
+    pub fn hole_diameter(&self) -> Length {
+        Length::new(self.hole_diameter_mm(), MilliMeter)
     }
 
     fn h_mm(&self) -> f64 {
@@ -119,7 +120,7 @@ impl BoltDiameter {
     }
 
     fn h(&self) -> Length {
-        Length::new(self.h_mm(), &MilliMeter)
+        Length::new(self.h_mm(), MilliMeter)
     }
 
     fn large_d_mm(&self) -> f64 {
@@ -130,7 +131,7 @@ impl BoltDiameter {
     }
 
     fn large_d(&self) -> Length {
-        Length::new(self.large_d_mm(), &MilliMeter)
+        Length::new(self.large_d_mm(), MilliMeter)
     }
 
     fn full_area_mm(&self) -> f64 {
@@ -141,6 +142,6 @@ impl BoltDiameter {
     }
 
     fn full_area(&self) -> Area {
-        Area::new(self.full_area_mm(), &MilliMeter)
+        Area::new(self.full_area_mm(), MilliMeter)
     }
 }

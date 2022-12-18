@@ -1,4 +1,4 @@
-#[derive(Default)]
+#[derive(Default, Debug, Copy, Clone, PartialEq)]
 pub enum LengthUnit {
     #[default]
     Meter,
@@ -16,7 +16,7 @@ impl LengthUnit {
     }
 }
 
-#[derive(Default)]
+#[derive(Default, Debug, Copy, Clone, PartialEq)]
 pub enum ForceUnit {
     #[default]
     Newton,

@@ -27,7 +27,7 @@ struct Brace {
 impl Default for Brace {
     fn default() -> Self {
         Brace {
-            section: Mutex::new(Box::new(AngleSteel::default())),
+            section: Mutex::new(Box::new(CTSteel::default())),
             material: Mutex::new(SteelMaterial::default()),
             bolt_connection: Mutex::new(BoltConnection::default()),
         }
@@ -43,12 +43,16 @@ struct AxialForce {
 fn list_sections() -> Vec<String> {
     let mut list: Vec<String> = Vec::new();
 
+    for section in CTSteel::iter() {
+        list.push(section.name());
+    }
+
     for section in AngleSteel::iter() {
-        list.push(section.name().to_string());
+        list.push(section.name());
     }
 
     for section in ChannelSteel::iter() {
-        list.push(section.name().to_string());
+        list.push(section.name());
     }
 
     list
@@ -111,7 +115,7 @@ fn set_bolts(material_name: &str, diameter_name: &str, num_bolts: u32, brace: ta
 #[tauri::command]
 fn set_force_in_kn(value: f64, n: tauri::State<AxialForce>) {
     let mut load = n.force.lock().unwrap();
-    *load = Force::new(value, &KiloNewton);
+    *load = Force::new(value, KiloNewton);
 }
 
 #[tauri::command]
@@ -126,7 +130,7 @@ fn get_section_thickness_in_mm(brace: tauri::State<Brace>) -> f64 {
         .lock()
         .unwrap()
         .thickness()
-        .get_value_in(&MilliMeter)
+        .get_value_in(MilliMeter)
 }
 
 #[tauri::command]
@@ -137,7 +141,7 @@ fn get_bolt_diameter_in_mm(brace: tauri::State<Brace>) -> f64 {
         .unwrap()
         .bolt
         .diameter()
-        .get_value_in(&MilliMeter)
+        .get_value_in(MilliMeter)
 }
 
 #[tauri::command]
@@ -148,7 +152,7 @@ fn get_bolt_coord_list_in_mm(brace: tauri::State<Brace>) -> Vec<(f64, f64)> {
         .unwrap()
         .gauge_list()
         .iter()
-        .map(|g| g.get_value_in(&MilliMeter))
+        .map(|g| g.get_value_in(MilliMeter))
         .collect();
 
     let num_row = brace.bolt_connection.lock().unwrap().num_row;
@@ -181,17 +185,22 @@ fn get_joint_length_in_mm(brace: tauri::State<Brace>) -> f64 {
 fn get_bolt_dimension_in_mm(brace: tauri::State<Brace>) -> (f64, f64) {
     let bolts = brace.bolt_connection.lock().unwrap();
     (
-        bolts.bolt.head_height().get_value_in(&MilliMeter),
-        bolts.bolt.head_size().get_value_in(&MilliMeter),
+        bolts.bolt.head_height().get_value_in(MilliMeter),
+        bolts.bolt.head_size().get_value_in(MilliMeter),
     )
 }
 
 #[tauri::command]
-fn calculate(brace: tauri::State<Brace>, force: tauri::State<AxialForce>) -> f64 {
+fn calculate_base(brace: tauri::State<Brace>, force: tauri::State<AxialForce>) -> f64 {
     let sec = brace.section.lock().unwrap();
     let mat = brace.material.lock().unwrap();
+    let hole_diameter = (*brace.bolt_connection.lock().unwrap())
+        .bolt
+        .hole_diameter();
     let f = force.force.lock().unwrap();
-    *f / (*sec).area() / (*mat).get_fy()
+    let hole_area = (*sec).thickness() * hole_diameter * (*sec).num_bolt_col() as f64;
+    let effective_area = (*sec).area() - hole_area;
+    *f / effective_area / (*mat).get_fy()
 }
 
 #[tauri::command]
@@ -228,7 +237,7 @@ fn main() {
             get_bolt_coord_list_in_mm,
             get_joint_length_in_mm,
             get_bolt_dimension_in_mm,
-            calculate,
+            calculate_base,
             calculate_bolts,
         ])
         .run(tauri::generate_context!())
