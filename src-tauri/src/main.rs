@@ -194,6 +194,21 @@ fn calculate(brace: tauri::State<Brace>, force: tauri::State<AxialForce>) -> f64
     *f / (*sec).area() / (*mat).get_fy()
 }
 
+#[tauri::command]
+fn calculate_bolts(brace: tauri::State<Brace>, force: tauri::State<AxialForce>) -> f64 {
+    let num_row = brace.bolt_connection.lock().unwrap().num_row;
+    let num_col = brace.section.lock().unwrap().gauge_list().len();
+    let num_bolts = num_row * num_col as u32;
+    let fs = brace
+        .bolt_connection
+        .lock()
+        .unwrap()
+        .bolt
+        .allowable_shear_short_single_friction();
+    let f = force.force.lock().unwrap();
+    *f / (fs * num_bolts as f64)
+}
+
 fn main() {
     tauri::Builder::default()
         .manage(Brace::default())
@@ -214,6 +229,7 @@ fn main() {
             get_joint_length_in_mm,
             get_bolt_dimension_in_mm,
             calculate,
+            calculate_bolts,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

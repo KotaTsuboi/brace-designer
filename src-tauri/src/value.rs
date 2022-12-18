@@ -38,6 +38,16 @@ impl Area {
     }
 }
 
+impl ops::Mul<Stress> for Area {
+    type Output = Force;
+
+    fn mul(self, rhs: Stress) -> Self::Output {
+        Force {
+            n: self.m2 * rhs.n_per_m2,
+        }
+    }
+}
+
 #[derive(Default, Copy, Clone)]
 pub struct Force {
     n: f64,
@@ -67,6 +77,14 @@ impl ops::Div<Area> for Force {
     fn div(self, rhs: Area) -> Self::Output {
         let s = self.n / rhs.m2;
         Stress::new(s, &ForceUnit::default(), &LengthUnit::default())
+    }
+}
+
+impl ops::Div<Force> for Force {
+    type Output = f64;
+
+    fn div(self, rhs: Force) -> Self::Output {
+        self.n / rhs.n
     }
 }
 

@@ -73,7 +73,11 @@ impl HighTensionBolt {
     }
 
     pub fn allowable_shear_short_single_friction(&self) -> Force {
-        self.diameter.full_area() * self.material.get_t0() * 0.45
+        self.diameter.full_area() * self.material.t0() * 0.45
+    }
+
+    pub fn allowable_shear_short_double_friction(&self) -> Force {
+        self.allowable_shear_short_single_friction() * 2.0
     }
 }
 

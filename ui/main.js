@@ -44,7 +44,9 @@ function addEventListenerToProperties() {
         const boltMaterialListEl = document.querySelector("#bolt-material-list");
         const boltDiameterListEl = document.querySelector("#bolt-diameter-list");
         const numBoltsSliderEl = document.querySelector("#num-bolts-slider");
-        const type = el.tagName === "input" ? "input" : "change";
+        const type = el.tagName.toLowerCase() === "input" ? "input" : "change";
+        console.log("tagname:");
+        console.log(el.tagName);
         el.addEventListener(type, async () => {
             await invoke("set_bolts", {
                 materialName: boltMaterialListEl.value,
