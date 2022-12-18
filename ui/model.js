@@ -92,16 +92,18 @@ export async function modifyModelView() {
 }
 
 function getColor(rate) {
-    if (rate > 1) {
-        return 0xFF0000;
-    } else if (rate > 0.75) {
-        return 0xFFFF00;
-    } else if (rate > 0.5) {
-        return 0x00FF00;
-    } else if (rate > 0.25) {
-        return 0x0000FF;
+    if (rate < 0) {
+        throw "Rate is negative";
+    } else if (rate == 0) {
+        return new THREE.Color(0.5, 0.5, 0.5);
+    } else if (rate < 0.33) {
+        return new THREE.Color(0, rate / 0.33, 1);
+    } else if (rate < 0.67) {
+        return new THREE.Color(0, 1, (0.67 - rate) / 0.33);
+    } else if (rate < 1) {
+        return new THREE.Color((rate - 0.67) / 0.33, 1, 0);
     } else {
-        return 0x999999;
+        return new THREE.Color(1, 0, 0);
     }
 }
 
