@@ -6,6 +6,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     await addOptions("#material-list", "list_materials");
     await addOptions("#bolt-material-list", "list_bolt_materials");
     await addOptions("#bolt-diameter-list", "list_bolt_diameters");
+    await addOptions("#gpl-material-list", "list_materials");
     addEventListenerToProperties();
     initializeModelView();
 });
@@ -44,9 +45,8 @@ function addEventListenerToProperties() {
         const boltMaterialListEl = document.querySelector("#bolt-material-list");
         const boltDiameterListEl = document.querySelector("#bolt-diameter-list");
         const numBoltsSliderEl = document.querySelector("#num-bolts-slider");
+
         const type = el.tagName.toLowerCase() === "input" ? "input" : "change";
-        console.log("tagname:");
-        console.log(el.tagName);
         el.addEventListener(type, async () => {
             await invoke("set_bolts", {
                 materialName: boltMaterialListEl.value,
@@ -58,25 +58,51 @@ function addEventListenerToProperties() {
     });
 
     const numBoltsSliderEl = document.querySelector("#num-bolts-slider");
-    numBoltsSliderEl.addEventListener("input", () => modifyBoltNum());
+    numBoltsSliderEl.addEventListener("input", () => modifyLabelValue(numBoltsSliderEl));
+
+    const gplPropertiesEl = document.querySelectorAll(".gpl-properties");
+    gplPropertiesEl.forEach((el) => {
+        const gplMaterialListEl = document.querySelector("#gpl-material-list");
+        const gplThicknessSliderEl = document.querySelector("#gpl-thickness-slider");
+        const gplLgSliderEl = document.querySelector("#gpl-lg-slider");
+
+        const type = el.tagName.toLowerCase() === "input" ? "input" : "change";
+        el.addEventListener(type, async () => {
+            await invoke("set_gpl", {
+                materialName: gplMaterialListEl.value,
+                thickness: gplThicknessSliderEl.value,
+                lg: gplLgSliderEl.value
+            });
+            modifyModelView();
+        });
+    });
+
+    const gplThicknessSliderEl = document.querySelector("#gpl-thickness-slider");
+    const gplLgSliderEl = document.querySelector("#gpl-lg-slider");
+    gplThicknessSliderEl.addEventListener("input", () => modifyLabelValue(gplLgSliderEl));
+    gplLgSliderEl.addEventListener("input", () => modifyLabelValue(gplLgSliderEl));
 
     const loadSliderEl = document.querySelector("#short-load-slider");
     loadSliderEl.addEventListener("input", async () => {
-        modifyLoadValue();
+        modifyLabelValue(loadSliderEl);
         await invoke("set_force_in_kn", {value: parseFloat(loadSliderEl.value)});
         modifyModelView();
     });
 }
 
-function modifyBoltNum() {
-    const sliderEl = document.querySelector("#num-bolts-slider");
-    const labelEl = document.querySelector("#num-bolts-value");
-    labelEl.innerHTML = sliderEl.value;
-}
+function modifyLabelValue(el) {
+    console.log("el:");
+    console.log(el)
 
-function modifyLoadValue() {
-    const sliderEl = document.querySelector("#short-load-slider");
-    const labelEl = document.querySelector("#short-load-value");
-    labelEl.innerHTML = sliderEl.value;
-}
+    console.log("parent:");
+    console.log(el.parentNode);
 
+    console.log("next:");
+    console.log(el.parentNode.nextElementSibling);
+
+    console.log("child:");
+    console.log(el.parentNode.nextElementSibling.firstElementChild);
+
+    const labelEl = el.parentNode.nextElementSibling.firstElementChild;
+    labelEl.innerHTML = el.value;
+}

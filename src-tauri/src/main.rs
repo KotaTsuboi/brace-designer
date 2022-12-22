@@ -4,17 +4,20 @@
 )]
 
 mod bolt;
+mod gusset_plate;
 mod material;
 mod section;
 mod unit;
 mod value;
 
 use crate::bolt::*;
+use crate::gusset_plate::*;
 use crate::material::*;
 use crate::section::*;
 use crate::unit::ForceUnit::*;
 use crate::unit::LengthUnit::*;
 use crate::value::Force;
+use crate::value::Length;
 use std::sync::Mutex;
 use strum::IntoEnumIterator;
 
@@ -22,6 +25,7 @@ struct Brace {
     section: Mutex<Box<dyn Section>>,
     material: Mutex<SteelMaterial>,
     bolt_connection: Mutex<BoltConnection>,
+    gpl: Mutex<GussetPlate>,
 }
 
 impl Default for Brace {
@@ -30,6 +34,11 @@ impl Default for Brace {
             section: Mutex::new(Box::new(CTSteel::default())),
             material: Mutex::new(SteelMaterial::default()),
             bolt_connection: Mutex::new(BoltConnection::default()),
+            gpl: Mutex::new(GussetPlate::new(
+                CTSteel::default().thickness(),
+                Length::new(500.0, MilliMeter),
+                SteelMaterial::SS400,
+            )),
         }
     }
 }
