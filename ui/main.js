@@ -69,9 +69,9 @@ function addEventListenerToProperties() {
         const type = el.tagName.toLowerCase() === "input" ? "input" : "change";
         el.addEventListener(type, async () => {
             await invoke("set_gpl", {
-                materialName: gplMaterialListEl.value,
-                thickness: gplThicknessSliderEl.value,
-                lg: gplLgSliderEl.value
+                thickness: parseFloat(gplThicknessSliderEl.value),
+                lg: parseFloat(gplLgSliderEl.value),
+                materialName: gplMaterialListEl.value
             });
             modifyModelView();
         });
@@ -79,7 +79,7 @@ function addEventListenerToProperties() {
 
     const gplThicknessSliderEl = document.querySelector("#gpl-thickness-slider");
     const gplLgSliderEl = document.querySelector("#gpl-lg-slider");
-    gplThicknessSliderEl.addEventListener("input", () => modifyLabelValue(gplLgSliderEl));
+    gplThicknessSliderEl.addEventListener("input", () => modifyLabelValue(gplThicknessSliderEl));
     gplLgSliderEl.addEventListener("input", () => modifyLabelValue(gplLgSliderEl));
 
     const loadSliderEl = document.querySelector("#short-load-slider");
@@ -91,18 +91,6 @@ function addEventListenerToProperties() {
 }
 
 function modifyLabelValue(el) {
-    console.log("el:");
-    console.log(el)
-
-    console.log("parent:");
-    console.log(el.parentNode);
-
-    console.log("next:");
-    console.log(el.parentNode.nextElementSibling);
-
-    console.log("child:");
-    console.log(el.parentNode.nextElementSibling.firstElementChild);
-
     const labelEl = el.parentNode.nextElementSibling.firstElementChild;
     labelEl.innerHTML = el.value;
 }

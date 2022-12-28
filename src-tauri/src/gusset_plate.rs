@@ -3,8 +3,8 @@ use crate::unit::LengthUnit::*;
 use crate::value::*;
 
 pub struct GussetPlate {
-    thickness: Length,
-    lg: Length,
+    pub thickness: Length,
+    pub lg: Length,
     material: SteelMaterial,
 }
 

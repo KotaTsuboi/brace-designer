@@ -18,6 +18,12 @@ impl BoltConnection {
     }
 }
 
+impl BoltConnection {
+    pub fn joint_length(&self) -> Length {
+        Length::new(self.num_row as f64 * 60.0 + 40.0, MilliMeter)
+    }
+}
+
 impl Default for BoltConnection {
     fn default() -> Self {
         Self {

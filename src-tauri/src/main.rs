@@ -122,6 +122,17 @@ fn set_bolts(material_name: &str, diameter_name: &str, num_bolts: u32, brace: ta
 }
 
 #[tauri::command]
+fn set_gpl(thickness: f64, lg: f64, material_name: &str, brace: tauri::State<Brace>) {
+    let new_gpl = GussetPlate::new(
+        Length::new(thickness, MilliMeter),
+        Length::new(lg, MilliMeter),
+        SteelMaterial::new(material_name).unwrap(),
+    );
+    let mut gpl = brace.gpl.lock().unwrap();
+    *gpl = new_gpl;
+}
+
+#[tauri::command]
 fn set_force_in_kn(value: f64, n: tauri::State<AxialForce>) {
     let mut load = n.force.lock().unwrap();
     *load = Force::new(value, KiloNewton);
@@ -140,6 +151,33 @@ fn get_section_thickness_in_mm(brace: tauri::State<Brace>) -> f64 {
         .unwrap()
         .thickness()
         .get_value_in(MilliMeter)
+}
+
+#[tauri::command]
+fn get_gpl_thickness_in_mm(brace: tauri::State<Brace>) -> f64 {
+    let gpl = brace.gpl.lock().unwrap();
+    gpl.thickness.get_value_in(MilliMeter)
+}
+
+#[tauri::command]
+fn get_gpl_shape_in_mm(brace: tauri::State<Brace>) -> Polyline {
+    let gpl = brace.gpl.lock().unwrap();
+    let section = brace.section.lock().unwrap();
+    let bolt_connection = brace.bolt_connection.lock().unwrap();
+
+    let unit = MilliMeter;
+    let lg = gpl.lg.get_value_in(unit);
+    let breadth = section.breadth().get_value_in(unit);
+    let joint_length = bolt_connection.joint_length().get_value_in(unit);
+
+    Polyline::new(vec![
+        (0.0, breadth / 2.0),
+        (joint_length, lg / 2.0),
+        (joint_length + 40.0, lg / 2.0),
+        (joint_length + 40.0, -lg / 2.0),
+        (joint_length, -lg / 2.0),
+        (0.0, -breadth / 2.0),
+    ])
 }
 
 #[tauri::command]
@@ -239,6 +277,7 @@ fn main() {
             set_section,
             set_material,
             set_bolts,
+            set_gpl,
             set_force_in_kn,
             get_section_in_mm,
             get_section_thickness_in_mm,
@@ -246,6 +285,8 @@ fn main() {
             get_bolt_coord_list_in_mm,
             get_joint_length_in_mm,
             get_bolt_dimension_in_mm,
+            get_gpl_thickness_in_mm,
+            get_gpl_shape_in_mm,
             calculate_base,
             calculate_bolts,
         ])

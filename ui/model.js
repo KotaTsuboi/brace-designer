@@ -7,6 +7,8 @@ let jointLength;
 let mesh;
 let currentMesh;
 let bolts = [];
+let gpl;
+let currentGpl;
 
 export async function initializeModelView() {
     console.log("initialize model view");
@@ -89,6 +91,7 @@ export async function modifyModelView() {
     console.log("modify model view");
     await modifyBaseModel();
     await modifyBoltModel();
+    await modifyGplModel();
 }
 
 function getColor(rate) {
@@ -107,8 +110,7 @@ function getColor(rate) {
     }
 }
 
-function getSteelMaterial(color) 
-{
+function getSteelMaterial(color) {
     return new THREE.MeshStandardMaterial({
         color: color,
         metalness: 1,
@@ -145,9 +147,6 @@ async function modifyBaseModel() {
 
 async function getSectionShape() {
     const polyline = await invoke("get_section_in_mm");
-
-    console.log("polyline:");
-    console.log(polyline)
 
     const shape = new THREE.Shape();
 
@@ -228,4 +227,55 @@ async function getBolt() {
     const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
 
     return geometry;
+}
+
+async function getGplShape() {
+    const polyline = await invoke("get_gpl_shape_in_mm");
+
+    const shape = new THREE.Shape();
+
+    shape.moveTo(polyline.start_point[0], polyline.start_point[1]);
+
+    for (const point of polyline.next_points) {
+        shape.lineTo(point[0], point[1]);
+    }
+
+    return shape;
+}
+
+
+async function extrudeGpl(shape) {
+    let t = await invoke("get_gpl_thickness_in_mm");
+
+    const extrudeSettings = {
+        depth: t,
+        bevelEnabled: false
+    };
+
+    const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+
+    return geometry;
+}
+
+async function modifyGplModel() {
+    const shape = await getGplShape();
+
+    const geometry = await extrudeGpl(shape);
+
+    const rate = 0.0;
+
+    const color = getColor(rate);
+
+    const material = getSteelMaterial(color);
+
+    gpl = new THREE.Mesh(geometry, material);
+
+    if (currentGpl !== undefined) {
+        scene.remove(currentGpl);
+    }
+
+    gpl.rotation.y -= Math.PI / 2;
+
+    scene.add(gpl)
+    currentGpl = gpl;
 }

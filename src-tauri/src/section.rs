@@ -12,6 +12,7 @@ pub trait Section: Send + Sync {
     fn num_bolt_col(&self) -> u32 {
         self.gauge_list().len() as u32
     }
+    fn breadth(&self) -> Length;
     fn thickness(&self) -> Length;
 }
 
@@ -175,6 +176,10 @@ impl Section for CTSteel {
     fn thickness(&self) -> Length {
         self.tf
     }
+
+    fn breadth(&self) -> Length {
+        self.b
+    }
 }
 
 #[derive(EnumIter, Default)]
@@ -262,6 +267,10 @@ impl Section for AngleSteel {
 
     fn thickness(&self) -> Length {
         self.t()
+    }
+
+    fn breadth(&self) -> Length {
+        self.a()
     }
 }
 
@@ -364,12 +373,29 @@ impl Section for ChannelSteel {
     fn thickness(&self) -> Length {
         self.t1()
     }
+
+    fn breadth(&self) -> Length {
+        self.h()
+    }
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct Polyline {
     start_point: (f64, f64),
     next_points: Vec<(f64, f64)>,
+}
+
+impl Polyline {
+    pub fn new(mut points: Vec<(f64, f64)>) -> Self {
+        if points.len() < 2 {
+            panic!("Length of points is less than 2: {}", points.len());
+        }
+
+        Polyline {
+            start_point: points[0],
+            next_points: points.drain(1..).collect(),
+        }
+    }
 }
 
 #[test]
