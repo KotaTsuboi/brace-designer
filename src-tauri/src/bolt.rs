@@ -20,7 +20,18 @@ impl BoltConnection {
 
 impl BoltConnection {
     pub fn joint_length(&self) -> Length {
-        Length::new(self.num_row as f64 * 60.0 + 40.0, MilliMeter)
+        let e = self.end_distance();
+        let p = self.pitch();
+        let n = self.num_row as i32;
+        p * n + e
+    }
+
+    pub fn end_distance(&self) -> Length {
+        Length::new(40.0, MilliMeter)
+    }
+
+    pub fn pitch(&self) -> Length {
+        Length::new(60.0, MilliMeter)
     }
 }
 

@@ -1,11 +1,10 @@
 use crate::material::*;
-use crate::unit::LengthUnit::*;
 use crate::value::*;
 
 pub struct GussetPlate {
     pub thickness: Length,
     pub lg: Length,
-    material: SteelMaterial,
+    pub material: SteelMaterial,
 }
 
 impl GussetPlate {
@@ -15,5 +14,9 @@ impl GussetPlate {
             lg,
             material,
         }
+    }
+
+    pub fn area(&self) -> Area {
+        self.thickness * self.lg
     }
 }

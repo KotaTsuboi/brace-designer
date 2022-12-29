@@ -9,6 +9,9 @@ pub trait Section: Send + Sync {
     fn name(&self) -> String;
     fn shape_in_mm(&self) -> Polyline;
     fn gauge_list(&self) -> Vec<Length>;
+    fn gauge_width(&self) -> Length {
+        *self.gauge_list().first().unwrap() - *self.gauge_list().last().unwrap()
+    }
     fn num_bolt_col(&self) -> u32 {
         self.gauge_list().len() as u32
     }
@@ -226,6 +229,15 @@ impl AngleSteel {
     fn t(&self) -> Length {
         Length::new(self.t_mm(), MilliMeter)
     }
+
+    fn gauge(&self) -> Length {
+        let unit = MilliMeter;
+
+        match self {
+            Self::L80x80x6 => Length::new(45.0, unit),
+            Self::L100x100x10 => Length::new(55.0, unit),
+        }
+    }
 }
 
 impl Section for AngleSteel {
@@ -249,10 +261,11 @@ impl Section for AngleSteel {
         let a = self.a().get_value_in(unit);
         let b = self.b().get_value_in(unit);
         let t = self.t().get_value_in(unit);
+        let g = self.gauge().get_value_in(unit);
 
         Polyline {
-            start_point: (0.0, 0.0),
-            next_points: vec![(a, 0.0), (a, t), (t, t), (t, b), (0.0, b)],
+            start_point: (0.0, -g),
+            next_points: vec![(a, -g), (a, t - g), (t, t - g), (t, b - g), (0.0, b - g)],
         }
     }
 
@@ -260,8 +273,8 @@ impl Section for AngleSteel {
         let unit = MilliMeter;
 
         match self {
-            Self::L80x80x6 => vec![Length::new(45.0, unit)],
-            Self::L100x100x10 => vec![Length::new(55.0, unit)],
+            Self::L80x80x6 => vec![Length::new(0.0, unit)],
+            Self::L100x100x10 => vec![Length::new(0.0, unit)],
         }
     }
 

@@ -15,9 +15,11 @@ use crate::gusset_plate::*;
 use crate::material::*;
 use crate::section::*;
 use crate::unit::ForceUnit::*;
+use crate::unit::LengthUnit;
 use crate::unit::LengthUnit::*;
-use crate::value::Force;
-use crate::value::Length;
+use crate::value::*;
+use std::cmp;
+use std::f64::consts::PI;
 use std::sync::Mutex;
 use strum::IntoEnumIterator;
 
@@ -220,12 +222,12 @@ fn get_bolt_coord_list_in_mm(brace: tauri::State<Brace>) -> Vec<(f64, f64)> {
 
 #[tauri::command]
 fn get_joint_length_in_mm(brace: tauri::State<Brace>) -> f64 {
-    let num_row = brace.bolt_connection.lock().unwrap().num_row;
+    let bolt_connection = brace.bolt_connection.lock().unwrap();
+    let n = bolt_connection.num_row as i32;
+    let e = bolt_connection.end_distance();
+    let p = bolt_connection.pitch();
 
-    let e = 40.0;
-    let p = 60.0;
-
-    2.0 * e + (num_row - 1) as f64 * p
+    (e * 2 + p * (n - 1)).get_value_in(MilliMeter)
 }
 
 #[tauri::command]
@@ -248,6 +250,27 @@ fn calculate_base(brace: tauri::State<Brace>, force: tauri::State<AxialForce>) -
     let hole_area = (*sec).thickness() * hole_diameter * (*sec).num_bolt_col() as f64;
     let effective_area = (*sec).area() - hole_area;
     *f / effective_area / (*mat).get_fy()
+}
+
+#[tauri::command]
+fn calculate_gpl(brace: tauri::State<Brace>, force: tauri::State<AxialForce>) -> f64 {
+    let sec = brace.section.lock().unwrap();
+    let gpl = brace.gpl.lock().unwrap();
+    let bolt_connection = brace.bolt_connection.lock().unwrap();
+    let hole_diameter = bolt_connection.bolt.hole_diameter();
+    let f = force.force.lock().unwrap();
+    let hole_area = gpl.thickness * hole_diameter * sec.num_bolt_col() as f64;
+    let length =
+        bolt_connection.pitch() * (bolt_connection.num_row as i32 - 1) as f64 * (PI / 6.0).tan()
+            + sec.gauge_width();
+    let effective_length = cmp::min(gpl.lg, length);
+    let area = effective_length * gpl.thickness;
+    let effective_area = if area > hole_area {
+        area - hole_area
+    } else {
+        Area::new(0.0, LengthUnit::default())
+    };
+    *f / effective_area / gpl.material.get_fy()
 }
 
 #[tauri::command]
@@ -289,6 +312,7 @@ fn main() {
             get_gpl_shape_in_mm,
             calculate_base,
             calculate_bolts,
+            calculate_gpl
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

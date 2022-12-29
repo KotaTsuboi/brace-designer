@@ -262,7 +262,7 @@ async function modifyGplModel() {
 
     const geometry = await extrudeGpl(shape);
 
-    const rate = 0.0;
+    const rate = await invoke("calculate_gpl");
 
     const color = getColor(rate);
 

@@ -1,7 +1,8 @@
 use crate::unit::*;
+use std::cmp::Ordering;
 use std::ops;
 
-#[derive(Debug, PartialEq, Copy, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub struct Length {
     value: f64,
     unit: LengthUnit,
@@ -17,6 +18,17 @@ impl Length {
     }
 }
 
+impl ops::Add<Length> for Length {
+    type Output = Length;
+
+    fn add(self, rhs: Length) -> Self::Output {
+        Length::new(
+            self.get_value_in(self.unit) + rhs.get_value_in(self.unit),
+            self.unit,
+        )
+    }
+}
+
 impl ops::Sub<Length> for Length {
     type Output = Length;
 
@@ -25,6 +37,14 @@ impl ops::Sub<Length> for Length {
             self.get_value_in(self.unit) - rhs.get_value_in(self.unit),
             self.unit,
         )
+    }
+}
+
+impl ops::Mul<i32> for Length {
+    type Output = Length;
+
+    fn mul(self, rhs: i32) -> Self::Output {
+        Length::new(self.get_value_in(self.unit) * rhs as f64, self.unit)
     }
 }
 
@@ -42,6 +62,32 @@ impl ops::Mul<Length> for Length {
     fn mul(self, rhs: Length) -> Self::Output {
         let unit = LengthUnit::default();
         Area::new(self.get_value_in(unit) * rhs.get_value_in(unit), unit)
+    }
+}
+
+impl PartialEq for Length {
+    fn eq(&self, other: &Self) -> bool {
+        let unit = LengthUnit::default();
+        self.get_value_in(unit) == other.get_value_in(unit)
+    }
+}
+
+impl Eq for Length {}
+
+impl PartialOrd for Length {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        let unit = LengthUnit::default();
+        self.get_value_in(unit)
+            .partial_cmp(&other.get_value_in(unit))
+    }
+}
+
+impl Ord for Length {
+    fn cmp(&self, other: &Self) -> Ordering {
+        let unit = LengthUnit::default();
+        self.get_value_in(unit)
+            .partial_cmp(&other.get_value_in(unit))
+            .unwrap()
     }
 }
 
@@ -64,6 +110,21 @@ impl Area {
 
     pub fn get_value_in(&self, unit: LengthUnit) -> f64 {
         self.m2 / unit.rate().powi(Self::DIM)
+    }
+}
+
+impl PartialEq for Area {
+    fn eq(&self, other: &Self) -> bool {
+        let unit = LengthUnit::default();
+        self.get_value_in(unit) == other.get_value_in(unit)
+    }
+}
+
+impl PartialOrd for Area {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        let unit = LengthUnit::default();
+        self.get_value_in(unit)
+            .partial_cmp(&other.get_value_in(unit))
     }
 }
 
