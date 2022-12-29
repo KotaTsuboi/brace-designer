@@ -7,7 +7,7 @@ use strum_macros::EnumIter;
 pub trait Section: Send + Sync {
     fn area(&self) -> Area;
     fn name(&self) -> String;
-    fn shape_in_mm(&self) -> Polyline;
+    fn shape_in_m(&self) -> Polyline;
     fn gauge_list(&self) -> Vec<Length>;
     fn gauge_width(&self) -> Length {
         *self.gauge_list().first().unwrap() - *self.gauge_list().last().unwrap()
@@ -154,8 +154,8 @@ impl Section for CTSteel {
         }
     }
 
-    fn shape_in_mm(&self) -> Polyline {
-        let unit = MilliMeter;
+    fn shape_in_m(&self) -> Polyline {
+        let unit = Meter;
 
         let h = self.h.get_value_in(unit);
         let b = self.b.get_value_in(unit);
@@ -255,8 +255,8 @@ impl Section for AngleSteel {
         }
     }
 
-    fn shape_in_mm(&self) -> Polyline {
-        let unit = MilliMeter;
+    fn shape_in_m(&self) -> Polyline {
+        let unit = Meter;
 
         let a = self.a().get_value_in(unit);
         let b = self.b().get_value_in(unit);
@@ -352,8 +352,8 @@ impl Section for ChannelSteel {
         }
     }
 
-    fn shape_in_mm(&self) -> Polyline {
-        let unit = MilliMeter;
+    fn shape_in_m(&self) -> Polyline {
+        let unit = Meter;
 
         let h = self.h().get_value_in(unit);
         let b = self.b().get_value_in(unit);

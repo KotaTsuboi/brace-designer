@@ -141,79 +141,74 @@ fn set_force_in_kn(value: f64, n: tauri::State<AxialForce>) {
 }
 
 #[tauri::command]
-fn get_section_in_mm(brace: tauri::State<Brace>) -> Polyline {
-    brace.section.lock().unwrap().shape_in_mm()
+fn get_section_in_m(brace: tauri::State<Brace>) -> Polyline {
+    brace.section.lock().unwrap().shape_in_m()
 }
 
 #[tauri::command]
-fn get_section_thickness_in_mm(brace: tauri::State<Brace>) -> f64 {
+fn get_section_thickness_in_m(brace: tauri::State<Brace>) -> f64 {
     brace
         .section
         .lock()
         .unwrap()
         .thickness()
-        .get_value_in(MilliMeter)
+        .get_value_in(Meter)
 }
 
 #[tauri::command]
-fn get_gpl_thickness_in_mm(brace: tauri::State<Brace>) -> f64 {
+fn get_gpl_thickness_in_m(brace: tauri::State<Brace>) -> f64 {
     let gpl = brace.gpl.lock().unwrap();
-    gpl.thickness.get_value_in(MilliMeter)
+    gpl.thickness.get_value_in(Meter)
 }
 
 #[tauri::command]
-fn get_gpl_shape_in_mm(brace: tauri::State<Brace>) -> Polyline {
+fn get_gpl_shape_in_m(brace: tauri::State<Brace>) -> Polyline {
     let gpl = brace.gpl.lock().unwrap();
     let section = brace.section.lock().unwrap();
     let bolt_connection = brace.bolt_connection.lock().unwrap();
 
-    let unit = MilliMeter;
+    let unit = Meter;
     let lg = gpl.lg.get_value_in(unit);
     let breadth = section.breadth().get_value_in(unit);
     let joint_length = bolt_connection.joint_length().get_value_in(unit);
+    let margin = Length::new(40.0, MilliMeter).get_value_in(unit);
 
     Polyline::new(vec![
         (0.0, breadth / 2.0),
         (joint_length, lg / 2.0),
-        (joint_length + 40.0, lg / 2.0),
-        (joint_length + 40.0, -lg / 2.0),
+        (joint_length + margin, lg / 2.0),
+        (joint_length + margin, -lg / 2.0),
         (joint_length, -lg / 2.0),
         (0.0, -breadth / 2.0),
     ])
 }
 
 #[tauri::command]
-fn get_bolt_diameter_in_mm(brace: tauri::State<Brace>) -> f64 {
+fn get_bolt_diameter_in_m(brace: tauri::State<Brace>) -> f64 {
     brace
         .bolt_connection
         .lock()
         .unwrap()
         .bolt
         .diameter()
-        .get_value_in(MilliMeter)
+        .get_value_in(Meter)
 }
 
 #[tauri::command]
-fn get_bolt_coord_list_in_mm(brace: tauri::State<Brace>) -> Vec<(f64, f64)> {
-    let gauge_list: Vec<f64> = brace
-        .section
-        .lock()
-        .unwrap()
-        .gauge_list()
-        .iter()
-        .map(|g| g.get_value_in(MilliMeter))
-        .collect();
+fn get_bolt_coord_list_in_m(brace: tauri::State<Brace>) -> Vec<(f64, f64)> {
+    let gauge_list: Vec<Length> = brace.section.lock().unwrap().gauge_list();
 
-    let num_row = brace.bolt_connection.lock().unwrap().num_row;
+    let bolt_connection = brace.bolt_connection.lock().unwrap();
+    let num_row = bolt_connection.num_row;
 
-    let e = 40.0;
-    let p = 60.0;
+    let e = bolt_connection.end_distance();
+    let p = bolt_connection.pitch();
     let mut list: Vec<(f64, f64)> = vec![];
 
     for y in gauge_list {
         for i in 0..num_row {
-            let x = e + (i as f64) * p;
-            list.push((x, y));
+            let x = e + p * (i as i32);
+            list.push((x.get_value_in(Meter), y.get_value_in(Meter)));
         }
     }
 
@@ -221,21 +216,21 @@ fn get_bolt_coord_list_in_mm(brace: tauri::State<Brace>) -> Vec<(f64, f64)> {
 }
 
 #[tauri::command]
-fn get_joint_length_in_mm(brace: tauri::State<Brace>) -> f64 {
+fn get_joint_length_in_m(brace: tauri::State<Brace>) -> f64 {
     let bolt_connection = brace.bolt_connection.lock().unwrap();
     let n = bolt_connection.num_row as i32;
     let e = bolt_connection.end_distance();
     let p = bolt_connection.pitch();
 
-    (e * 2 + p * (n - 1)).get_value_in(MilliMeter)
+    (e * 2 + p * (n - 1)).get_value_in(Meter)
 }
 
 #[tauri::command]
-fn get_bolt_dimension_in_mm(brace: tauri::State<Brace>) -> (f64, f64) {
+fn get_bolt_dimension_in_m(brace: tauri::State<Brace>) -> (f64, f64) {
     let bolts = brace.bolt_connection.lock().unwrap();
     (
-        bolts.bolt.head_height().get_value_in(MilliMeter),
-        bolts.bolt.head_size().get_value_in(MilliMeter),
+        bolts.bolt.head_height().get_value_in(Meter),
+        bolts.bolt.head_size().get_value_in(Meter),
     )
 }
 
@@ -302,14 +297,14 @@ fn main() {
             set_bolts,
             set_gpl,
             set_force_in_kn,
-            get_section_in_mm,
-            get_section_thickness_in_mm,
-            get_bolt_diameter_in_mm,
-            get_bolt_coord_list_in_mm,
-            get_joint_length_in_mm,
-            get_bolt_dimension_in_mm,
-            get_gpl_thickness_in_mm,
-            get_gpl_shape_in_mm,
+            get_section_in_m,
+            get_section_thickness_in_m,
+            get_bolt_diameter_in_m,
+            get_bolt_coord_list_in_m,
+            get_joint_length_in_m,
+            get_bolt_dimension_in_m,
+            get_gpl_thickness_in_m,
+            get_gpl_shape_in_m,
             calculate_base,
             calculate_bolts,
             calculate_gpl

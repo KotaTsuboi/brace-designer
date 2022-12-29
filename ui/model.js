@@ -1,7 +1,8 @@
 const {invoke} = window.__TAURI__.tauri;
 
 const scene = new THREE.Scene();
-const baseLength = 1000;
+const baseLength = 1;
+const gl = -0.3;
 
 let jointLength;
 let mesh;
@@ -17,38 +18,62 @@ export async function initializeModelView() {
         canvas: canvasElement,
         antialias: true
     });
+    renderer.shadowMap.enabled = true;
 
-    const camera = new THREE.PerspectiveCamera(45, 1.0, 1, 1000000);
-    camera.position.set(1000, 1000, 1000);
+    const camera = new THREE.PerspectiveCamera(45, 1.0, 0.001, 50);
+    camera.position.set(1, 1, 1);
+    //const cameraHelper = new THREE.CameraHelper(camera);
+    //scene.add(cameraHelper);
 
     scene.background = new THREE.Color(0xe0e0e0);
-    scene.fog = new THREE.Fog(0xe0e0e0, 2000, 10000);
+    scene.fog = new THREE.Fog(0xe0e0e0, 2, 10);
 
     // lights
 
-    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444);
-    hemiLight.position.set(0, 10000, 0);
+    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 1);
+    hemiLight.position.set(0, 1, 0);
     scene.add(hemiLight);
+    //const hemiLightHelper = new THREE.HemisphereLightHelper(hemiLight, 1);
+    //scene.add(hemiLightHelper);
+    //const ambientLight = new THREE.AmbientLight(0xffffff);
+    //scene.add(ambientLight);
 
-    const dirLight1 = new THREE.DirectionalLight(0xffffff);
-    dirLight1.position.set(10000, 10000, 0);
-    scene.add(dirLight1);
+    const dirLight = new THREE.DirectionalLight(0xffffff);
+    dirLight.position.set(1, 1, -0.5);
+    dirLight.castShadow = true;
+    dirLight.shadow.mapSize.width = 512;
+    dirLight.shadow.mapSize.height = 512;
+    dirLight.shadow.camera.top = 0.5;
+    dirLight.shadow.camera.bottom = -0.5;
+    dirLight.shadow.camera.left = -1;
+    dirLight.shadow.camera.right = 1;
+    dirLight.shadow.camera.near = 1.0;
+    dirLight.shadow.camera.far = 3.0;
+    scene.add(dirLight);
 
-    const dirLight2 = new THREE.DirectionalLight(0xffffff);
-    dirLight2.position.set(-10000, 10000, 0);
-    scene.add(dirLight2);
+    const dirLightShadowHelper = new THREE.CameraHelper(dirLight.shadow.camera);
+    scene.add(dirLightShadowHelper);
+    const dirLightHelper = new THREE.DirectionalLightHelper(dirLight);
+    scene.add(dirLightHelper);
 
     // ground
 
-    const plane = new THREE.Mesh(new THREE.PlaneGeometry(200000, 200000), new THREE.MeshPhongMaterial({color: 0x999999, depthWrite: false}));
+    const plane = new THREE.Mesh(
+        new THREE.PlaneGeometry(10, 10),
+        new THREE.MeshPhongMaterial({
+            color: 0x999999,
+            depthWrite: false
+        })
+    );
     plane.rotation.x = - Math.PI / 2;
-    plane.translateY(-100);
+    plane.translateZ(gl);
+    plane.receiveShadow = true;
     scene.add(plane);
 
-    const grid = new THREE.GridHelper(20000, 100, 0x000000, 0x000000);
+    const grid = new THREE.GridHelper(10, 50, 0x000000, 0x000000);
     grid.material.opacity = 0.2;
     grid.material.transparent = true;
-    grid.translateY(-100);
+    grid.translateY(gl);
     scene.add(grid);
 
     const controls = new THREE.OrbitControls(camera, canvasElement);
@@ -57,7 +82,7 @@ export async function initializeModelView() {
     controls.dampingFactor = 0.2;
 
     // helper
-    const axesHelper = new THREE.AxesHelper(1000);
+    const axesHelper = new THREE.AxesHelper(1);
     scene.add(axesHelper);
 
     await modifyModelView();
@@ -113,8 +138,9 @@ function getColor(rate) {
 function getSteelMaterial(color) {
     return new THREE.MeshStandardMaterial({
         color: color,
-        metalness: 1,
-        roughness: 0.5,
+        metalness: 0.9,
+        roughness: 0.6,
+        emissive: 0x222222,
     });
 
 }
@@ -140,13 +166,14 @@ async function modifyBaseModel() {
     }
 
     mesh.translateZ(-baseLength);
+    mesh.castShadow = true;
 
     scene.add(mesh)
     currentMesh = mesh;
 }
 
 async function getSectionShape() {
-    const polyline = await invoke("get_section_in_mm");
+    const polyline = await invoke("get_section_in_m");
 
     const shape = new THREE.Shape();
 
@@ -160,7 +187,7 @@ async function getSectionShape() {
 }
 
 async function extrudeBase(shape) {
-    jointLength = await invoke("get_joint_length_in_mm");
+    jointLength = await invoke("get_joint_length_in_m");
 
     const extrudeSettings = {
         depth: baseLength + jointLength,
@@ -174,7 +201,7 @@ async function extrudeBase(shape) {
 
 
 async function modifyBoltModel() {
-    const coordList = await invoke("get_bolt_coord_list_in_mm");
+    const coordList = await invoke("get_bolt_coord_list_in_m");
 
     for (const bolt of bolts) {
         scene.remove(bolt);
@@ -185,7 +212,7 @@ async function modifyBoltModel() {
 
     for (const zy of coordList) {
         const geometry = await getBolt();
-        const t = await invoke("get_section_thickness_in_mm");
+        const t = await invoke("get_section_thickness_in_m");
 
         const material = getSteelMaterial(color);
 
@@ -205,9 +232,11 @@ async function modifyBoltModel() {
 }
 
 async function getBolt() {
-    const dimensions = await invoke("get_bolt_dimension_in_mm");
+    const dimensions = await invoke("get_bolt_dimension_in_m");
     const h = dimensions[0];
     const b = dimensions[1];
+    console.log("h: " + h);
+    console.log("b: " + b);
 
     const shape = new THREE.Shape();
     shape.moveTo(b / 2, 0);
@@ -221,7 +250,7 @@ async function getBolt() {
 
     const extrudeSettings = {
         depth: h,
-        bavelEnabled: false
+        bevelEnabled: false,
     };
 
     const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
@@ -230,7 +259,7 @@ async function getBolt() {
 }
 
 async function getGplShape() {
-    const polyline = await invoke("get_gpl_shape_in_mm");
+    const polyline = await invoke("get_gpl_shape_in_m");
 
     const shape = new THREE.Shape();
 
@@ -245,7 +274,7 @@ async function getGplShape() {
 
 
 async function extrudeGpl(shape) {
-    let t = await invoke("get_gpl_thickness_in_mm");
+    let t = await invoke("get_gpl_thickness_in_m");
 
     const extrudeSettings = {
         depth: t,
@@ -275,6 +304,7 @@ async function modifyGplModel() {
     }
 
     gpl.rotation.y -= Math.PI / 2;
+    gpl.castShadow = true;
 
     scene.add(gpl)
     currentGpl = gpl;
