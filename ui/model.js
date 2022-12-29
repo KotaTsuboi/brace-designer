@@ -51,10 +51,12 @@ export async function initializeModelView() {
     dirLight.shadow.camera.far = 3.0;
     scene.add(dirLight);
 
+    /*
     const dirLightShadowHelper = new THREE.CameraHelper(dirLight.shadow.camera);
     scene.add(dirLightShadowHelper);
     const dirLightHelper = new THREE.DirectionalLightHelper(dirLight);
     scene.add(dirLightHelper);
+    */
 
     // ground
 

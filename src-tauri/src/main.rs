@@ -38,7 +38,7 @@ impl Default for Brace {
             bolt_connection: Mutex::new(BoltConnection::default()),
             gpl: Mutex::new(GussetPlate::new(
                 CTSteel::default().thickness(),
-                Length::new(500.0, MilliMeter),
+                Length::new(300.0, MilliMeter),
                 SteelMaterial::SS400,
             )),
         }

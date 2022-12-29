@@ -38,7 +38,7 @@ impl BoltConnection {
 impl Default for BoltConnection {
     fn default() -> Self {
         Self {
-            num_row: 1,
+            num_row: 4,
             bolt: HighTensionBolt::default(),
         }
     }
