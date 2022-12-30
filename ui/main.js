@@ -14,6 +14,8 @@ const gplLgSliderEl = document.querySelector("#gpl-lg-slider");
 
 const loadSliderEl = document.querySelector("#short-load-slider");
 
+const writeButtonEl = document.querySelector("#write-button");
+
 window.addEventListener("DOMContentLoaded", async () => {
     await initializeProperties();
     initializeModelView();
@@ -98,6 +100,12 @@ function addEventListenerToProperties() {
         await invoke("set_force_in_kn", {value: parseFloat(loadSliderEl.value)});
         modifyModelView();
     });
+
+    writeButtonEl.addEventListener("click", () => 
+        invoke("write_file")
+        .then(() => console.log("export success"))
+        .catch(() => console.log("export failed"))
+    );
 }
 
 function modifyLabelValue(sliderEl) {

@@ -7,6 +7,7 @@ mod bolt;
 mod gusset_plate;
 mod material;
 mod section;
+mod sheet;
 mod unit;
 mod value;
 
@@ -14,6 +15,7 @@ use crate::bolt::*;
 use crate::gusset_plate::*;
 use crate::material::*;
 use crate::section::*;
+use crate::sheet::write;
 use crate::unit::ForceUnit::*;
 use crate::unit::LengthUnit;
 use crate::unit::LengthUnit::*;
@@ -283,6 +285,14 @@ fn calculate_bolts(brace: tauri::State<Brace>, force: tauri::State<AxialForce>) 
     *f / (fs * num_bolts as f64)
 }
 
+#[tauri::command]
+fn write_file(brace: tauri::State<Brace>, force: tauri::State<Brace>) -> Result<(), ()> {
+    match write("sheet.pdf".to_string()) {
+        Ok(_) => Ok(()),
+        Err(_) => Err(()),
+    }
+}
+
 fn main() {
     tauri::Builder::default()
         .manage(Brace::default())
@@ -307,7 +317,8 @@ fn main() {
             get_gpl_shape_in_m,
             calculate_base,
             calculate_bolts,
-            calculate_gpl
+            calculate_gpl,
+            write_file
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
