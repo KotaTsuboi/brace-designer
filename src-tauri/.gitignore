@@ -2,9 +2,9 @@
 # will have compiled files and executables
 /target/
 
-src/resources/*.aux
-src/resources/*.fdb_latexmk
-src/resources/*.fls
-src/resources/*.log
-src/resources/*.pdf
-src/resources/*.synctex.gz
+resources/*.aux
+resources/*.fdb_latexmk
+resources/*.fls
+resources/*.log
+resources/*.pdf
+resources/*.synctex.gz
