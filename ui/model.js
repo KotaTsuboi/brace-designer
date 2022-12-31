@@ -154,7 +154,9 @@ async function modifyBaseModel() {
 
     const geometry = await extrudeBase(shape);
 
-    const rate = await invoke("calculate_base");
+    const result = await invoke("calculate_base");
+
+    const rate = result.gamma;
 
     const color = getColor(rate);
 

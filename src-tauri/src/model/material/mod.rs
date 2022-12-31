@@ -1,3 +1,5 @@
+pub mod command;
+
 use crate::unit::ForceUnit::*;
 use crate::unit::LengthUnit::*;
 use crate::value::Stress;

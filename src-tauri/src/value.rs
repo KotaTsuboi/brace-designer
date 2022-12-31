@@ -91,6 +91,7 @@ impl Ord for Length {
     }
 }
 
+#[derive(Copy, Clone)]
 pub struct Area {
     m2: f64,
 }

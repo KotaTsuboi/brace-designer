@@ -1,3 +1,5 @@
+pub mod command;
+
 use crate::material::BoltMaterial;
 use crate::unit::LengthUnit::*;
 use crate::value::*;

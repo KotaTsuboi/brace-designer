@@ -3,19 +3,25 @@
     windows_subsystem = "windows"
 )]
 
-mod bolt;
-mod gusset_plate;
-mod material;
-mod section;
+mod model;
+mod result;
 mod sheet;
 mod unit;
 mod value;
 
-use crate::bolt::*;
-use crate::gusset_plate::*;
-use crate::material::*;
-use crate::section::*;
-use crate::sheet::write;
+use crate::model::bolt::command::*;
+use crate::model::bolt::*;
+use crate::model::gpl::*;
+use crate::model::material;
+use crate::model::material::command::*;
+use crate::model::material::*;
+use crate::model::section;
+use crate::model::section::command::*;
+use crate::model::section::Polyline;
+use crate::model::AxialForce;
+use crate::model::Brace;
+use crate::result::BaseYieldResult;
+use crate::sheet::command::*;
 use crate::unit::ForceUnit::*;
 use crate::unit::LengthUnit;
 use crate::unit::LengthUnit::*;
@@ -23,110 +29,31 @@ use crate::value::*;
 use std::cmp;
 use std::f64::consts::PI;
 use std::sync::Mutex;
-use strum::IntoEnumIterator;
-
-struct Brace {
-    section: Mutex<Box<dyn Section>>,
-    material: Mutex<SteelMaterial>,
-    bolt_connection: Mutex<BoltConnection>,
-    gpl: Mutex<GussetPlate>,
-}
-
-impl Default for Brace {
-    fn default() -> Self {
-        Brace {
-            section: Mutex::new(Box::new(CTSteel::default())),
-            material: Mutex::new(SteelMaterial::default()),
-            bolt_connection: Mutex::new(BoltConnection::default()),
-            gpl: Mutex::new(GussetPlate::new(
-                CTSteel::default().thickness(),
-                Length::new(300.0, MilliMeter),
-                SteelMaterial::SS400,
-            )),
-        }
-    }
-}
-
-#[derive(Default)]
-struct AxialForce {
-    force: Mutex<Force>,
-}
+use tauri::State;
 
 #[tauri::command]
-fn list_sections() -> Vec<String> {
-    let mut list: Vec<String> = Vec::new();
-
-    for section in CTSteel::iter() {
-        list.push(section.name());
-    }
-
-    for section in AngleSteel::iter() {
-        list.push(section.name());
-    }
-
-    for section in ChannelSteel::iter() {
-        list.push(section.name());
-    }
-
-    list
-}
-
-#[tauri::command]
-fn list_materials() -> Vec<String> {
-    let mut list: Vec<String> = Vec::new();
-
-    for material in SteelMaterial::iter() {
-        list.push(material.name().to_string());
-    }
-
-    list
-}
-
-#[tauri::command]
-fn list_bolt_diameters() -> Vec<String> {
-    let mut list: Vec<String> = Vec::new();
-
-    for diameter in BoltDiameter::iter() {
-        list.push(diameter.name().to_string());
-    }
-
-    list
-}
-
-#[tauri::command]
-fn list_bolt_materials() -> Vec<String> {
-    let mut list: Vec<String> = Vec::new();
-
-    for material in BoltMaterial::iter() {
-        list.push(material.name().to_string());
-    }
-
-    list
-}
-
-#[tauri::command]
-fn set_section(name: &str, brace: tauri::State<Brace>) {
-    let new_section = get_section(name).unwrap();
+fn set_section(name: &str, brace: State<Brace>) {
+    let new_section = section::get_section(name).unwrap();
     let mut sec = brace.section.lock().unwrap();
     *sec = new_section;
 }
 
 #[tauri::command]
-fn set_material(name: &str, brace: tauri::State<Brace>) {
+fn set_material(name: &str, brace: State<Brace>) {
     let new_material = SteelMaterial::new(name).unwrap();
     let mut mat = brace.material.lock().unwrap();
     *mat = new_material;
 }
 
 #[tauri::command]
-fn set_bolts(material_name: &str, diameter_name: &str, num_bolts: u32, brace: tauri::State<Brace>) {
+fn set_bolts(material_name: &str, diameter_name: &str, num_bolts: u32, brace: State<Brace>) {
     let new_bolts = BoltConnection::new(material_name, diameter_name, num_bolts).unwrap();
     let mut bolts = brace.bolt_connection.lock().unwrap();
     *bolts = new_bolts;
 }
 
 #[tauri::command]
-fn set_gpl(thickness: f64, lg: f64, material_name: &str, brace: tauri::State<Brace>) {
+fn set_gpl(thickness: f64, lg: f64, material_name: &str, brace: State<Brace>) {
     let new_gpl = GussetPlate::new(
         Length::new(thickness, MilliMeter),
         Length::new(lg, MilliMeter),
@@ -137,18 +64,18 @@ fn set_gpl(thickness: f64, lg: f64, material_name: &str, brace: tauri::State<Bra
 }
 
 #[tauri::command]
-fn set_force_in_kn(value: f64, n: tauri::State<AxialForce>) {
+fn set_force_in_kn(value: f64, n: State<AxialForce>) {
     let mut load = n.force.lock().unwrap();
     *load = Force::new(value, KiloNewton);
 }
 
 #[tauri::command]
-fn get_section_in_m(brace: tauri::State<Brace>) -> Polyline {
+fn get_section_in_m(brace: State<Brace>) -> Polyline {
     brace.section.lock().unwrap().shape_in_m()
 }
 
 #[tauri::command]
-fn get_section_thickness_in_m(brace: tauri::State<Brace>) -> f64 {
+fn get_section_thickness_in_m(brace: State<Brace>) -> f64 {
     brace
         .section
         .lock()
@@ -158,13 +85,13 @@ fn get_section_thickness_in_m(brace: tauri::State<Brace>) -> f64 {
 }
 
 #[tauri::command]
-fn get_gpl_thickness_in_m(brace: tauri::State<Brace>) -> f64 {
+fn get_gpl_thickness_in_m(brace: State<Brace>) -> f64 {
     let gpl = brace.gpl.lock().unwrap();
     gpl.thickness.get_value_in(Meter)
 }
 
 #[tauri::command]
-fn get_gpl_shape_in_m(brace: tauri::State<Brace>) -> Polyline {
+fn get_gpl_shape_in_m(brace: State<Brace>) -> Polyline {
     let gpl = brace.gpl.lock().unwrap();
     let section = brace.section.lock().unwrap();
     let bolt_connection = brace.bolt_connection.lock().unwrap();
@@ -186,7 +113,7 @@ fn get_gpl_shape_in_m(brace: tauri::State<Brace>) -> Polyline {
 }
 
 #[tauri::command]
-fn get_bolt_diameter_in_m(brace: tauri::State<Brace>) -> f64 {
+fn get_bolt_diameter_in_m(brace: State<Brace>) -> f64 {
     brace
         .bolt_connection
         .lock()
@@ -197,7 +124,7 @@ fn get_bolt_diameter_in_m(brace: tauri::State<Brace>) -> f64 {
 }
 
 #[tauri::command]
-fn get_bolt_coord_list_in_m(brace: tauri::State<Brace>) -> Vec<(f64, f64)> {
+fn get_bolt_coord_list_in_m(brace: State<Brace>) -> Vec<(f64, f64)> {
     let gauge_list: Vec<Length> = brace.section.lock().unwrap().gauge_list();
 
     let bolt_connection = brace.bolt_connection.lock().unwrap();
@@ -218,7 +145,7 @@ fn get_bolt_coord_list_in_m(brace: tauri::State<Brace>) -> Vec<(f64, f64)> {
 }
 
 #[tauri::command]
-fn get_joint_length_in_m(brace: tauri::State<Brace>) -> f64 {
+fn get_joint_length_in_m(brace: State<Brace>) -> f64 {
     let bolt_connection = brace.bolt_connection.lock().unwrap();
     let n = bolt_connection.num_row as i32;
     let e = bolt_connection.end_distance();
@@ -228,7 +155,7 @@ fn get_joint_length_in_m(brace: tauri::State<Brace>) -> f64 {
 }
 
 #[tauri::command]
-fn get_bolt_dimension_in_m(brace: tauri::State<Brace>) -> (f64, f64) {
+fn get_bolt_dimension_in_m(brace: State<Brace>) -> (f64, f64) {
     let bolts = brace.bolt_connection.lock().unwrap();
     (
         bolts.bolt.head_height().get_value_in(Meter),
@@ -237,20 +164,48 @@ fn get_bolt_dimension_in_m(brace: tauri::State<Brace>) -> (f64, f64) {
 }
 
 #[tauri::command]
-fn calculate_base(brace: tauri::State<Brace>, force: tauri::State<AxialForce>) -> f64 {
+fn calculate_base(
+    brace: State<Brace>,
+    force: State<AxialForce>,
+    result: State<Mutex<BaseYieldResult>>,
+) -> BaseYieldResult {
     let sec = brace.section.lock().unwrap();
     let mat = brace.material.lock().unwrap();
     let hole_diameter = (*brace.bolt_connection.lock().unwrap())
         .bolt
         .hole_diameter();
-    let f = force.force.lock().unwrap();
+    let nd = force.force.lock().unwrap();
     let hole_area = (*sec).thickness() * hole_diameter * (*sec).num_bolt_col() as f64;
     let effective_area = (*sec).area() - hole_area;
-    *f / effective_area / (*mat).get_fy()
+    let fy = mat.get_fy();
+    let ny = effective_area * fy;
+    let gamma = (*nd) / ny;
+
+    let new_result = BaseYieldResult {
+        name: "V1".to_string(),
+        section_name: sec.name(),
+        material_name: mat.name().to_string(),
+        a: sec.area().get_value_in(CentiMeter),
+        ae: effective_area.get_value_in(CentiMeter),
+        fy: mat.get_fy().get_value_in(Newton, MilliMeter),
+        ny: ny.get_value_in(KiloNewton),
+        nd: nd.get_value_in(KiloNewton),
+        gamma,
+        judge: if gamma > 1.0 {
+            "NG".to_string()
+        } else {
+            "OK".to_string()
+        },
+    };
+
+    let mut result = result.lock().unwrap();
+    *result = new_result.clone();
+
+    new_result
 }
 
 #[tauri::command]
-fn calculate_gpl(brace: tauri::State<Brace>, force: tauri::State<AxialForce>) -> f64 {
+fn calculate_gpl(brace: State<Brace>, force: State<AxialForce>) -> f64 {
     let sec = brace.section.lock().unwrap();
     let gpl = brace.gpl.lock().unwrap();
     let bolt_connection = brace.bolt_connection.lock().unwrap();
@@ -271,7 +226,7 @@ fn calculate_gpl(brace: tauri::State<Brace>, force: tauri::State<AxialForce>) ->
 }
 
 #[tauri::command]
-fn calculate_bolts(brace: tauri::State<Brace>, force: tauri::State<AxialForce>) -> f64 {
+fn calculate_bolts(brace: State<Brace>, force: State<AxialForce>) -> f64 {
     let num_row = brace.bolt_connection.lock().unwrap().num_row;
     let num_col = brace.section.lock().unwrap().gauge_list().len();
     let num_bolts = num_row * num_col as u32;
@@ -285,16 +240,8 @@ fn calculate_bolts(brace: tauri::State<Brace>, force: tauri::State<AxialForce>) 
     *f / (fs * num_bolts as f64)
 }
 
-#[tauri::command]
-fn write_file(brace: tauri::State<Brace>, force: tauri::State<Brace>) -> Result<(), ()> {
-    match write("sheet.pdf".to_string()) {
-        Ok(_) => Ok(()),
-        Err(_) => Err(()),
-    }
-}
-
 fn main() {
-    tauri::Builder::default()
+    let builder = tauri::Builder::default()
         .manage(Brace::default())
         .manage(AxialForce::default())
         .invoke_handler(tauri::generate_handler![
@@ -318,8 +265,12 @@ fn main() {
             calculate_base,
             calculate_bolts,
             calculate_gpl,
-            write_file
-        ])
+            write_file,
+        ]);
+
+    let builder = result::manage(builder);
+
+    builder
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
