@@ -9,7 +9,7 @@ use std::io::{BufWriter, Write};
 use std::path::PathBuf;
 use std::sync::Mutex;
 use tauri::api::dialog;
-use tauri::{Builder, State, Wry};
+use tauri::State;
 use tectonic;
 
 fn get_latex_str(result: BaseYieldResult) -> Result<String, Box<dyn Error>> {

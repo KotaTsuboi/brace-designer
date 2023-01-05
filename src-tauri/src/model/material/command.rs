@@ -1,6 +1,5 @@
 use super::*;
 use strum::IntoEnumIterator;
-use strum_macros::EnumIter;
 
 #[tauri::command]
 pub fn list_materials() -> Vec<String> {

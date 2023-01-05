@@ -25,7 +25,10 @@ use crate::sheet::command::*;
 use crate::unit::ForceUnit::*;
 use crate::unit::LengthUnit;
 use crate::unit::LengthUnit::*;
-use crate::value::*;
+use crate::value::area::Area;
+use crate::value::force::Force;
+use crate::value::length::Length;
+use result::Judge;
 use std::cmp;
 use std::f64::consts::PI;
 use std::sync::Mutex;
@@ -180,22 +183,19 @@ fn calculate_base(
     let fy = mat.get_fy();
     let ny = effective_area * fy;
     let gamma = (*nd) / ny;
+    let judge = if gamma > 1.0 { Judge::NG } else { Judge::OK };
 
     let new_result = BaseYieldResult {
         name: "V1".to_string(),
         section_name: sec.name(),
         material_name: mat.name().to_string(),
-        a: sec.area().get_value_in(CentiMeter),
-        ae: effective_area.get_value_in(CentiMeter),
-        fy: mat.get_fy().get_value_in(Newton, MilliMeter),
-        ny: ny.get_value_in(KiloNewton),
-        nd: nd.get_value_in(KiloNewton),
+        a: sec.area(),
+        ae: effective_area,
+        fy: mat.get_fy(),
+        ny,
+        nd: *nd,
         gamma,
-        judge: if gamma > 1.0 {
-            "NG".to_string()
-        } else {
-            "OK".to_string()
-        },
+        judge,
     };
 
     let mut result = result.lock().unwrap();

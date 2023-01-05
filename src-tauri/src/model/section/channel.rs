@@ -1,7 +1,8 @@
 use super::Polyline;
 use super::Section;
 use crate::unit::LengthUnit::*;
-use crate::value::*;
+use crate::value::area::Area;
+use crate::value::length::Length;
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 

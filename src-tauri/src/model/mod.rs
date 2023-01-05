@@ -9,7 +9,8 @@ use self::section::Section;
 use crate::model::gpl::*;
 use crate::model::section::ct::CTSteel;
 use crate::unit::LengthUnit::*;
-use crate::value::*;
+use crate::value::force::Force;
+use crate::value::length::Length;
 use std::sync::Mutex;
 
 pub struct Brace {

@@ -6,7 +6,8 @@ pub mod ct;
 use self::angle::AngleSteel;
 use self::channel::ChannelSteel;
 use self::ct::CTSteel;
-use crate::value::*;
+use crate::value::area::Area;
+use crate::value::length::Length;
 use serde::{Deserialize, Serialize};
 
 pub trait Section: Send + Sync {

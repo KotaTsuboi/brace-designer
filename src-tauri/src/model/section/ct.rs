@@ -1,7 +1,8 @@
 use super::Polyline;
 use super::Section;
 use crate::unit::LengthUnit::*;
-use crate::value::*;
+use crate::value::area::Area;
+use crate::value::length::Length;
 
 pub struct CTSteel {
     h: Length,

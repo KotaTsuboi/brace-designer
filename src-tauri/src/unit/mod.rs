@@ -1,4 +1,6 @@
-#[derive(Default, Debug, Copy, Clone, PartialEq)]
+use serde::Serialize;
+
+#[derive(Default, Debug, Copy, Clone, PartialEq, Serialize)]
 pub enum LengthUnit {
     #[default]
     Meter,
@@ -16,7 +18,7 @@ impl LengthUnit {
     }
 }
 
-#[derive(Default, Debug, Copy, Clone, PartialEq)]
+#[derive(Default, Debug, Copy, Clone, PartialEq, Serialize)]
 pub enum ForceUnit {
     #[default]
     Newton,

@@ -2,7 +2,7 @@ pub mod command;
 
 use crate::unit::ForceUnit::*;
 use crate::unit::LengthUnit::*;
-use crate::value::Stress;
+use crate::value::stress::Stress;
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 

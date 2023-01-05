@@ -1,5 +1,6 @@
 use crate::material::*;
-use crate::value::*;
+use crate::value::area::Area;
+use crate::value::length::Length;
 
 pub struct GussetPlate {
     pub thickness: Length,

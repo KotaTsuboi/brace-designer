@@ -1,20 +1,32 @@
 use std::sync::Mutex;
 
 use serde::Serialize;
+use strum_macros::Display;
 use tauri::{Builder, Wry};
+
+use crate::unit::ForceUnit::*;
+use crate::unit::LengthUnit::*;
+use crate::value::{area::Area, force::Force, stress::Stress};
+
+#[derive(Display, Default, Serialize, Clone)]
+pub enum Judge {
+    OK,
+    #[default]
+    NG,
+}
 
 #[derive(Serialize, Default, Clone)]
 pub struct BaseYieldResult {
     pub name: String,
     pub section_name: String,
     pub material_name: String,
-    pub a: f64,
-    pub ae: f64,
-    pub fy: f64,
-    pub ny: f64,
-    pub nd: f64,
+    pub a: Area,
+    pub ae: Area,
+    pub fy: Stress,
+    pub ny: Force,
+    pub nd: Force,
     pub gamma: f64,
-    pub judge: String,
+    pub judge: Judge,
 }
 
 impl BaseYieldResult {
@@ -24,11 +36,11 @@ impl BaseYieldResult {
             self.name,
             self.section_name,
             self.material_name,
-            self.a,
-            self.ae,
-            self.fy,
-            self.ny,
-            self.nd,
+            self.a.get_value_in(CentiMeter),
+            self.ae.get_value_in(CentiMeter),
+            self.fy.get_value_in(Newton, MilliMeter),
+            self.ny.get_value_in(KiloNewton),
+            self.nd.get_value_in(KiloNewton),
             self.gamma,
             self.judge,
         )
