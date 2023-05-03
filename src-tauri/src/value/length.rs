@@ -6,7 +6,7 @@ use std::ops;
 
 use super::area::Area;
 
-#[derive(Debug, Copy, Clone, Serialize)]
+#[derive(Default, Debug, Copy, Clone, Serialize)]
 pub struct Length {
     value: f64,
     unit: LengthUnit,

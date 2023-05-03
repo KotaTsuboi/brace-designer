@@ -12,18 +12,13 @@ use tauri::api::dialog;
 use tauri::State;
 use tectonic;
 
-fn get_latex_str(
-    base_yield_result: BaseYieldResult,
-    bolt_yield_result: BoltYieldResult,
-) -> Result<String, Box<dyn Error>> {
+fn get_latex_str(brace_result: BraceResult) -> Result<String, Box<dyn Error>> {
     let mut reg = Handlebars::new();
     reg.register_escape_fn(|str| handlebars::no_escape(str));
 
-    let base_rows = vec![base_yield_result.to_latex_table_row()];
-    let bolt_rows = vec![bolt_yield_result.to_latex_table_row()];
-    let gpl_rows = vec![
-        r#"\midrule V1 & SS400 & 200 & 9 & 100.0 & 90.0 & 235 & 200.0 & 100.0 & 0.500 & OK \\"#,
-    ];
+    let base_rows = vec![brace_result.base_yield_result.to_latex_table_row()];
+    let bolt_rows = vec![brace_result.bolt_yield_result.to_latex_table_row()];
+    let gpl_rows = vec![brace_result.gpl_yield_result.to_latex_table_row()];
     let welding_rows = vec![r#"\midrule V1 & II & 6 & 235 & 200.0 & 100.0 & 0.500 & OK \\"#];
 
     let template = include_str!("../../resources/template.tex");
@@ -41,21 +36,14 @@ fn get_latex_str(
     Ok(latex)
 }
 
-fn get_pdf_data(
-    base_yield_result: BaseYieldResult,
-    bolt_yield_result: BoltYieldResult,
-) -> Result<Vec<u8>, Box<dyn Error>> {
-    let latex = get_latex_str(base_yield_result, bolt_yield_result)?;
+fn get_pdf_data(brace_result: BraceResult) -> Result<Vec<u8>, Box<dyn Error>> {
+    let latex = get_latex_str(brace_result)?;
     let pdf = tectonic::latex_to_pdf(latex)?;
     Ok(pdf)
 }
 
-pub fn write(
-    file_path: PathBuf,
-    base_yield_result: BaseYieldResult,
-    bolt_yield_result: BoltYieldResult,
-) -> Result<(), Box<dyn Error>> {
-    let pdf = get_pdf_data(base_yield_result, bolt_yield_result)?;
+pub fn write(file_path: PathBuf, brace_result: BraceResult) -> Result<(), Box<dyn Error>> {
+    let pdf = get_pdf_data(brace_result)?;
     let mut writer = BufWriter::new(File::create(file_path)?);
     writer.write_all(&pdf)?;
     writer.flush()?;

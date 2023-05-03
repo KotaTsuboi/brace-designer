@@ -29,6 +29,8 @@ use crate::value::area::Area;
 use crate::value::force::Force;
 use crate::value::length::Length;
 use result::BoltYieldResult;
+use result::BraceResult;
+use result::GplYieldResult;
 use result::Judge;
 use std::cmp;
 use std::f64::consts::PI;
@@ -171,7 +173,7 @@ fn get_bolt_dimension_in_m(brace: State<Brace>) -> (f64, f64) {
 fn calculate_base(
     brace: State<Brace>,
     force: State<AxialForce>,
-    result: State<Mutex<BaseYieldResult>>,
+    result: State<Mutex<BraceResult>>,
 ) -> BaseYieldResult {
     let sec = brace.section.lock().unwrap();
     let mat = brace.material.lock().unwrap();
@@ -200,13 +202,17 @@ fn calculate_base(
     };
 
     let mut result = result.lock().unwrap();
-    *result = new_result.clone();
+    (*result).base_yield_result = new_result.clone();
 
     new_result
 }
 
 #[tauri::command]
-fn calculate_gpl(brace: State<Brace>, force: State<AxialForce>) -> f64 {
+fn calculate_gpl(
+    brace: State<Brace>,
+    force: State<AxialForce>,
+    result: State<Mutex<BraceResult>>,
+) -> GplYieldResult {
     let sec = brace.section.lock().unwrap();
     let gpl = brace.gpl.lock().unwrap();
     let bolt_connection = brace.bolt_connection.lock().unwrap();
@@ -223,14 +229,38 @@ fn calculate_gpl(brace: State<Brace>, force: State<AxialForce>) -> f64 {
     } else {
         Area::new(0.0, LengthUnit::default())
     };
-    *f / effective_area / gpl.material.get_fy()
+
+    let a = gpl.lg * gpl.thickness;
+    let fy = gpl.material.get_fy();
+    let ny = effective_area * fy;
+    let gamma = *f / ny;
+    let judge = if gamma > 1.0 { Judge::NG } else { Judge::OK };
+
+    let new_result = GplYieldResult {
+        name: "V1".to_string(),
+        material_name: gpl.material.name().to_string(),
+        lg: gpl.lg,
+        thickness: gpl.thickness,
+        a,
+        ae: effective_area,
+        fy,
+        ny,
+        nd: *f,
+        gamma,
+        judge,
+    };
+
+    let mut result = result.lock().unwrap();
+    (*result).gpl_yield_result = new_result.clone();
+
+    new_result
 }
 
 #[tauri::command]
 fn calculate_bolts(
     brace: State<Brace>,
     force: State<AxialForce>,
-    result: State<Mutex<BoltYieldResult>>,
+    result: State<Mutex<BraceResult>>,
 ) -> BoltYieldResult {
     let num_row = brace.bolt_connection.lock().unwrap().num_row;
     let num_col = brace.section.lock().unwrap().gauge_list().len();
@@ -256,7 +286,7 @@ fn calculate_bolts(
     };
 
     let mut result = result.lock().unwrap();
-    *result = new_result.clone();
+    (*result).bolt_yield_result = new_result.clone();
 
     new_result
 }

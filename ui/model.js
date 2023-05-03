@@ -203,7 +203,6 @@ async function extrudeBase(shape) {
     return geometry;
 }
 
-
 async function modifyBoltModel() {
     const coordList = await invoke("get_bolt_coord_list_in_m");
 
@@ -298,7 +297,9 @@ async function modifyGplModel() {
 
     const geometry = await extrudeGpl(shape);
 
-    const rate = await invoke("calculate_gpl");
+    const result = await invoke("calculate_gpl");
+
+    const rate = result.gamma;
 
     const color = getColor(rate);
 

@@ -6,6 +6,7 @@ use tauri::{Builder, Wry};
 
 use crate::unit::ForceUnit::*;
 use crate::unit::LengthUnit::*;
+use crate::value::length::Length;
 use crate::value::{area::Area, force::Force, stress::Stress};
 
 #[derive(Display, Default, Serialize, Clone)]
@@ -15,9 +16,11 @@ pub enum Judge {
     NG,
 }
 
+#[derive(Default, Clone)]
 pub struct BraceResult {
-    base_yield_result: BaseYieldResult,
-    bolt_yield_result: BoltYieldResult,
+    pub base_yield_result: BaseYieldResult,
+    pub bolt_yield_result: BoltYieldResult,
+    pub gpl_yield_result: GplYieldResult,
 }
 
 #[derive(Serialize, Default, Clone)]
@@ -82,8 +85,40 @@ impl BoltYieldResult {
     }
 }
 
+#[derive(Serialize, Default, Clone)]
+pub struct GplYieldResult {
+    pub name: String,
+    pub material_name: String,
+    pub lg: Length,
+    pub thickness: Length,
+    pub a: Area,
+    pub ae: Area,
+    pub fy: Stress,
+    pub ny: Force,
+    pub nd: Force,
+    pub gamma: f64,
+    pub judge: Judge,
+}
+
+impl GplYieldResult {
+    pub fn to_latex_table_row(&self) -> String {
+        format!(
+            r#"\midrule {} & {} & {:.0} & {:.0} & {:.1} & {:.1} & {:.0} & {:.1} & {:.1} & {:.3} & {} \\"#,
+            self.name,
+            self.material_name,
+            self.lg.get_value_in(MilliMeter),
+            self.thickness.get_value_in(MilliMeter),
+            self.a.get_value_in(CentiMeter),
+            self.ae.get_value_in(CentiMeter),
+            self.fy.get_value_in(Newton, MilliMeter),
+            self.ny.get_value_in(KiloNewton),
+            self.nd.get_value_in(KiloNewton),
+            self.gamma,
+            self.judge
+        )
+    }
+}
+
 pub fn manage(builder: Builder<Wry>) -> Builder<Wry> {
-    builder
-        .manage(Mutex::new(BaseYieldResult::default()))
-        .manage(Mutex::new(BoltYieldResult::default()))
+    builder.manage(Mutex::new(BraceResult::default()))
 }
