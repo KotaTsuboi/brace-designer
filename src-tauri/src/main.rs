@@ -28,6 +28,7 @@ use crate::unit::LengthUnit::*;
 use crate::value::area::Area;
 use crate::value::force::Force;
 use crate::value::length::Length;
+use result::BoltYieldResult;
 use result::Judge;
 use std::cmp;
 use std::f64::consts::PI;
@@ -226,18 +227,38 @@ fn calculate_gpl(brace: State<Brace>, force: State<AxialForce>) -> f64 {
 }
 
 #[tauri::command]
-fn calculate_bolts(brace: State<Brace>, force: State<AxialForce>) -> f64 {
+fn calculate_bolts(
+    brace: State<Brace>,
+    force: State<AxialForce>,
+    result: State<Mutex<BoltYieldResult>>,
+) -> BoltYieldResult {
     let num_row = brace.bolt_connection.lock().unwrap().num_row;
     let num_col = brace.section.lock().unwrap().gauge_list().len();
     let num_bolts = num_row * num_col as u32;
-    let fs = brace
-        .bolt_connection
-        .lock()
-        .unwrap()
-        .bolt
-        .allowable_shear_short_single_friction();
+    let bolt_connection = brace.bolt_connection.lock().unwrap();
+    let fs = bolt_connection.bolt.allowable_shear_short_single_friction();
     let f = force.force.lock().unwrap();
-    *f / (fs * num_bolts as f64)
+
+    let ny = fs * num_bolts as f64;
+    let gamma = *f / (fs * num_bolts as f64);
+    let judge = if gamma > 1.0 { Judge::NG } else { Judge::OK };
+
+    let new_result = BoltYieldResult {
+        name: "V1".to_string(),
+        diameter_name: bolt_connection.bolt.diameter_name().to_string(),
+        material_name: bolt_connection.bolt.material_name().to_string(),
+        qy: fs,
+        num_bolts,
+        ny,
+        nd: *f,
+        gamma,
+        judge,
+    };
+
+    let mut result = result.lock().unwrap();
+    *result = new_result.clone();
+
+    new_result
 }
 
 fn main() {

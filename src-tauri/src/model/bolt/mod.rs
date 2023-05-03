@@ -67,6 +67,10 @@ impl HighTensionBolt {
         None
     }
 
+    pub fn diameter_name(&self) -> &str {
+        self.diameter.name()
+    }
+
     pub fn diameter(&self) -> Length {
         self.diameter.d()
     }
@@ -83,6 +87,10 @@ impl HighTensionBolt {
         self.diameter.large_d()
     }
 
+    pub fn material_name(&self) -> &str {
+        self.material.name()
+    }
+
     pub fn allowable_shear_short_single_friction(&self) -> Force {
         self.diameter.full_area() * self.material.t0() * 0.45
     }
@@ -92,7 +100,7 @@ impl HighTensionBolt {
     }
 }
 
-#[derive(EnumIter, Default)]
+#[derive(EnumIter, Default, Clone)]
 pub enum BoltDiameter {
     #[default]
     M20,

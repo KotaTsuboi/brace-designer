@@ -44,7 +44,7 @@ impl SteelMaterial {
 
 impl Material for SteelMaterial {}
 
-#[derive(EnumIter, Default)]
+#[derive(EnumIter, Default, Clone)]
 pub enum BoltMaterial {
     F8T,
     #[default]

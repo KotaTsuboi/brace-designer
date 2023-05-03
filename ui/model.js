@@ -211,7 +211,10 @@ async function modifyBoltModel() {
         scene.remove(bolt);
     }
 
-    const rate = await invoke("calculate_bolts");
+    const result = await invoke("calculate_bolts");
+
+    const rate = result.gamma;
+
     const color = getColor(rate);
 
     for (const zy of coordList) {

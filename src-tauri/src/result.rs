@@ -15,6 +15,11 @@ pub enum Judge {
     NG,
 }
 
+pub struct BraceResult {
+    base_yield_result: BaseYieldResult,
+    bolt_yield_result: BoltYieldResult,
+}
+
 #[derive(Serialize, Default, Clone)]
 pub struct BaseYieldResult {
     pub name: String,
@@ -47,8 +52,38 @@ impl BaseYieldResult {
     }
 }
 
-pub struct BoltYieldResult {}
+#[derive(Serialize, Default, Clone)]
+pub struct BoltYieldResult {
+    pub name: String,
+    pub diameter_name: String,
+    pub material_name: String,
+    pub qy: Force,
+    pub num_bolts: u32,
+    pub ny: Force,
+    pub nd: Force,
+    pub gamma: f64,
+    pub judge: Judge,
+}
+
+impl BoltYieldResult {
+    pub fn to_latex_table_row(&self) -> String {
+        format!(
+            r#"\midrule {} & {} & {} & {} & {} & {} & {} & {:.3} & {} \\"#,
+            self.name,
+            self.diameter_name,
+            self.material_name,
+            self.qy.get_value_in(KiloNewton),
+            self.num_bolts,
+            self.ny.get_value_in(KiloNewton),
+            self.nd.get_value_in(KiloNewton),
+            self.gamma,
+            self.judge
+        )
+    }
+}
 
 pub fn manage(builder: Builder<Wry>) -> Builder<Wry> {
-    builder.manage(Mutex::new(BaseYieldResult::default()))
+    builder
+        .manage(Mutex::new(BaseYieldResult::default()))
+        .manage(Mutex::new(BoltYieldResult::default()))
 }
