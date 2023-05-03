@@ -12,6 +12,8 @@ const gplMaterialListEl = document.querySelector("#gpl-material-list");
 const gplThicknessSliderEl = document.querySelector("#gpl-thickness-slider");
 const gplLgSliderEl = document.querySelector("#gpl-lg-slider");
 
+const weldingTypeListEl = document.querySelector("#welding-type-list");
+
 const loadSliderEl = document.querySelector("#short-load-slider");
 
 const writeButtonEl = document.querySelector("#write-button");
@@ -27,13 +29,14 @@ async function initializeProperties() {
     await addOptions(boltMaterialListEl, "list_bolt_materials");
     await addOptions(boltDiameterListEl, "list_bolt_diameters");
     await addOptions(gplMaterialListEl, "list_materials");
+    await addOptions(weldingTypeListEl, "list_welding_types");
 
     addEventListenerToProperties();
 
-    modifyLabelValue(numBoltsSliderEl);
-    modifyLabelValue(gplThicknessSliderEl);
-    modifyLabelValue(gplLgSliderEl);
-    modifyLabelValue(loadSliderEl);
+    //modifyLabelValue(numBoltsSliderEl);
+    //modifyLabelValue(gplThicknessSliderEl);
+    //modifyLabelValue(gplLgSliderEl);
+    //modifyLabelValue(loadSliderEl);
 }
 
 async function addOptions(listEl, command) {
@@ -76,7 +79,7 @@ function addEventListenerToProperties() {
         });
     });
 
-    numBoltsSliderEl.addEventListener("input", () => modifyLabelValue(numBoltsSliderEl));
+    //numBoltsSliderEl.addEventListener("input", () => modifyLabelValue(numBoltsSliderEl));
 
     const gplPropertiesEl = document.querySelectorAll(".gpl-properties");
     gplPropertiesEl.forEach((el) => {
@@ -92,23 +95,25 @@ function addEventListenerToProperties() {
         });
     });
 
-    gplThicknessSliderEl.addEventListener("input", () => modifyLabelValue(gplThicknessSliderEl));
-    gplLgSliderEl.addEventListener("input", () => modifyLabelValue(gplLgSliderEl));
+    //gplThicknessSliderEl.addEventListener("input", () => modifyLabelValue(gplThicknessSliderEl));
+    //gplLgSliderEl.addEventListener("input", () => modifyLabelValue(gplLgSliderEl));
 
     loadSliderEl.addEventListener("input", async () => {
-        modifyLabelValue(loadSliderEl);
+        //modifyLabelValue(loadSliderEl);
         await invoke("set_force_in_kn", {value: parseFloat(loadSliderEl.value)});
         modifyModelView();
     });
 
-    writeButtonEl.addEventListener("click", () => 
+    writeButtonEl.addEventListener("click", () =>
         invoke("write_file")
-        .then(() => console.log("export success"))
-        .catch(() => console.log("export failed"))
+            .then(() => console.log("export success"))
+            .catch(() => console.log("export failed"))
     );
 }
 
+/*
 function modifyLabelValue(sliderEl) {
     const labelEl = sliderEl.parentNode.nextElementSibling.firstElementChild;
     labelEl.innerHTML = sliderEl.value;
 }
+*/

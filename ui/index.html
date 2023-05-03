@@ -66,11 +66,8 @@
                             Number of bolts
                         </td>
                         <td>
-                            <input type="range" class="bolt-properties" id="num-bolts-slider" min="1" max="8" step="1"
+                            <input type="number" class="bolt-properties" id="num-bolts-slider" min="1" step="1"
                                 value="4">
-                        </td>
-                        <td>
-                            <label id="num-bolts-value"></label>
                         </td>
                     </tr>
 
@@ -82,11 +79,8 @@
                             Thickness
                         </td>
                         <td>
-                            <input type="range" class="gpl-properties" id="gpl-thickness-slider" min="1" max="40"
-                                step="1" value="9">
-                        </td>
-                        <td>
-                            <label id="gpl-thickness-value"></label>
+                            <input type="number" class="gpl-properties" id="gpl-thickness-slider" min="1" step="1"
+                                value="9">
                         </td>
                         <td>mm</td>
                     </tr>
@@ -95,11 +89,8 @@
                             <label>LG</label>
                         </td>
                         <td>
-                            <input type="range" class="gpl-properties" id="gpl-lg-slider" min="0" max="500" step="10"
+                            <input type="number" class="gpl-properties" id="gpl-lg-slider" min="0" step="10"
                                 value="300">
-                        </td>
-                        <td>
-                            <label id="gpl-lg-value"></label>
                         </td>
                         <td>mm</td>
                     </tr>
@@ -114,6 +105,39 @@
                     </tr>
 
                     <tr>
+                        <th>Welding</th>
+                    </tr>
+                    <tr>
+                        <td>
+                            <label>Welding Type</label>
+                        </td>
+                        <td>
+                            <select class="welding-properties" id="welding-type-list">
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <label>Welding Length</label>
+                        </td>
+                        <td>
+                            <input type="number" class="welding-properties" id="welding-length-slider" min="0" step="10"
+                                value="500">
+                        </td>
+                        <td>mm</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <label>Welding Size</label>
+                        </td>
+                        <td>
+                            <input type="number" class="welding-properties" id="welding-size" min="0" max="20" step="1"
+                                value="12">
+                        </td>
+                        <td>mm</td>
+                    </tr>
+
+                    <tr>
                         <th>Force</th>
                     </tr>
                     <tr>
@@ -121,7 +145,7 @@
                             Short load
                         </td>
                         <td>
-                            <input type="range" id="short-load-slider" min="0" max="500" value="0">
+                            <input type="number" id="short-load-slider" min="0" value="0">
                         </td>
                         <td>
                             <label id="short-load-value"></label>
