@@ -18,6 +18,7 @@ use crate::model::material::*;
 use crate::model::section;
 use crate::model::section::command::*;
 use crate::model::section::Polyline;
+use crate::model::welding::command::*;
 use crate::model::AxialForce;
 use crate::model::Brace;
 use crate::result::BaseYieldResult;
@@ -300,6 +301,7 @@ fn main() {
             list_materials,
             list_bolt_diameters,
             list_bolt_materials,
+            list_welding_types,
             set_section,
             set_material,
             set_bolts,
